@@ -1,0 +1,344 @@
+{
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "torch": "2.14.0",
+  "core_labs_passed": 20,
+  "tiny_transformer": {
+    "initial_loss": 1.606665015220642,
+    "final_loss": 0.00027026241878047585,
+    "generated": "ABCDABCDABCDABCD",
+    "causality_test": "passed",
+    "parameters": 9380
+  },
+  "http_checks_passed": 7,
+  "starter_exercises": "intentionally incomplete; checks run after learner implementation",
+  "not_executed": [
+    "real pretrained-model inference",
+    "GPU serving or QLoRA training",
+    "MCP/A2A network conformance",
+    "real multimodal inference"
+  ],
+  "core_results": {
+    "01": {
+      "gradient": -12.0,
+      "finite_difference": -12.000000000078613,
+      "new_loss": 0.0,
+      "stable_softmax": [
+        0.09003057317038046,
+        0.24472847105479764,
+        0.6652409557748218
+      ]
+    },
+    "02": {
+      "merges": [
+        [
+          "l",
+          "o"
+        ],
+        [
+          "lo",
+          "w"
+        ],
+        [
+          "e",
+          "r"
+        ],
+        [
+          "e",
+          "w"
+        ],
+        [
+          "n",
+          "ew"
+        ]
+      ],
+      "pieces": [
+        [
+          "low"
+        ],
+        [
+          "low"
+        ],
+        [
+          "low",
+          "er"
+        ],
+        [
+          "new"
+        ],
+        [
+          "new",
+          "er"
+        ]
+      ],
+      "note": "Character BPE; not a pretrained byte tokenizer."
+    },
+    "03": {
+      "weights": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.3302384506733431,
+          0.6697615493266569,
+          0.0
+        ],
+        [
+          0.2482550782577231,
+          0.2482550782577231,
+          0.5034898434845538
+        ]
+      ],
+      "output": [
+        [
+          1.0,
+          0.0
+        ],
+        [
+          0.3302384506733431,
+          0.6697615493266569
+        ],
+        [
+          0.7517449217422769,
+          0.7517449217422769
+        ]
+      ],
+      "future_invariance": true
+    },
+    "04": {
+      "temperature_1": [
+        0.6652409557748218,
+        0.24472847105479764,
+        0.09003057317038046
+      ],
+      "temperature_05": [
+        0.8668133321973347,
+        0.11731042782619835,
+        0.015876239976466762
+      ],
+      "top_p_08": [
+        0.7058823529411765,
+        0.29411764705882354,
+        0.0,
+        0.0
+      ]
+    },
+    "05": {
+      "record_checks": "passed",
+      "constrained_enum": [
+        0.0,
+        0.6666666666666666,
+        0.3333333333333334
+      ],
+      "note": "Enum mask, not a full JSON grammar decoder."
+    },
+    "06": {
+      "dot": [
+        1.0,
+        10.0,
+        0.0
+      ],
+      "cosine": [
+        1.0,
+        0.9950371902099892,
+        0.0
+      ],
+      "different_top_results": true
+    },
+    "07": {
+      "chunks": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          3,
+          4,
+          5,
+          6
+        ],
+        [
+          6,
+          7,
+          8,
+          9
+        ]
+      ],
+      "bm25_scores": [
+        0.0,
+        0.0,
+        3.6904764562235997,
+        0.0,
+        0.0
+      ],
+      "fused": [
+        [
+          "a",
+          0.03252247488101534
+        ],
+        [
+          "b",
+          0.03252247488101534
+        ],
+        [
+          "c",
+          0.015873015873015872
+        ],
+        [
+          "d",
+          0.015873015873015872
+        ]
+      ]
+    },
+    "08": {
+      "path": [
+        [
+          "mira",
+          "owns",
+          "atlas",
+          "d1"
+        ],
+        [
+          "atlas",
+          "depends_on",
+          "searchcore",
+          "d1"
+        ],
+        [
+          "searchcore",
+          "maintained_by",
+          "platform",
+          "d2"
+        ]
+      ],
+      "sources": [
+        "d1",
+        "d2"
+      ],
+      "note": "Typed graph traversal, not Microsoft GraphRAG indexing."
+    },
+    "09": {
+      "draft": {
+        "draft_id": "draft-1",
+        "owner": "study",
+        "title": "Study",
+        "body": "Review attention."
+      },
+      "duplicate_count": 1,
+      "note": "In-memory mechanics; not durable atomic execution."
+    },
+    "10": {
+      "state": "completed",
+      "version": 4,
+      "artifact": {
+        "source": "d1"
+      },
+      "note": "Protocol-neutral lifecycle simulation, not MCP/A2A conformance."
+    },
+    "11": {
+      "unchanged_approved": true,
+      "changed_or_expired": "denied"
+    },
+    "12": {
+      "allowed_results": [
+        {
+          "id": "d5",
+          "text": "No deadline has been agreed for Project Atlas.",
+          "score": 1.220617589639198
+        }
+      ],
+      "unknown_user_results": [],
+      "note": "Specific boundary tests, not universal injection protection."
+    },
+    "13": {
+      "classification": {
+        "tp": 1,
+        "fp": 1,
+        "fn": 1,
+        "precision": 0.5,
+        "recall": 0.5
+      },
+      "paired_delta_interval": [
+        0.0,
+        0.2,
+        0.6
+      ],
+      "note": "Independent-case bootstrap assumption; five cases illustrate uncertainty."
+    },
+    "14": {
+      "cost_per_request": 0.006999999999999999,
+      "mean_latency": 0.6,
+      "escalated_latency": 1.5,
+      "note": "Illustrative arithmetic, not provider prices or measurements."
+    },
+    "15": {
+      "quantized": [
+        -5,
+        -1,
+        2,
+        3,
+        7
+      ],
+      "scale": 0.17142857142857143,
+      "reconstructed": [
+        -0.8571428571428572,
+        -0.17142857142857143,
+        0.34285714285714286,
+        0.5142857142857142,
+        1.2
+      ],
+      "max_error": 0.08285714285714285,
+      "cache_MiB": 512.0
+    },
+    "16": {
+      "bottleneck": {
+        "name": "generate",
+        "ms": 300
+      },
+      "note": "Synthetic trace timings; no benchmark claim."
+    },
+    "17": {
+      "ids": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "labels": [
+        -100,
+        -100,
+        -100,
+        13,
+        14
+      ],
+      "note": "Label alignment assumes a trainer that performs the causal shift."
+    },
+    "18": {
+      "initial_loss": 0.055928036903721334,
+      "final_loss": 1.3867829128790596e-30,
+      "base_unchanged": true,
+      "both_zero_initialization": "zero gradients",
+      "note": "Rank-one NumPy adaptation; not QLoRA."
+    },
+    "19": {
+      "dpo_loss_negative_zero_positive": [
+        1.3132616875182228,
+        0.6931471805599453,
+        0.31326168751822286
+      ],
+      "teacher_KL_before": 0.43349530670148917,
+      "teacher_KL_after": -7.261493897337573e-18,
+      "note": "Synthetic distribution matching at temperature 1."
+    },
+    "20": {
+      "WER_number_error": 0.25,
+      "overlap_seconds": 1.0,
+      "note": "WER measures edits, not business harm."
+    }
+  }
+}
