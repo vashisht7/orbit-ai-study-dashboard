@@ -71,3 +71,20 @@ h1{margin:2px 0 10px;font-size:24px}
   .tabs{margin-left:0}
   #code{min-height:240px;font-size:13px}
 }
+/* Interview study bank */
+[hidden]{display:none!important}
+.study-guide,.problem-context,.examples,.solution-panel{border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:16px;background:var(--panel)}
+.study-guide{background:linear-gradient(135deg,rgba(99,102,241,.14),var(--panel))}
+summary{cursor:pointer;font-weight:600;color:#c7d2fe}
+.study-guide p,.study-guide li,.problem-context p{font-size:13px;color:var(--dim)}
+a{color:#a5b4fc;text-underline-offset:3px}
+.problem-context .pill{display:inline-block;margin:0 4px 5px 0}
+.problem-context details p{padding:8px 0;border-bottom:1px solid var(--line)}
+.problem-context b{color:var(--text)}
+.examples .case{margin-top:10px}
+.solution-panel{margin-top:16px;border-color:rgba(129,140,248,.4)}
+.solution-panel h2{font-size:20px;margin:0 0 12px}
+.solution-panel h3{font-size:15px;color:#c7d2fe;margin:20px 0 6px}
+.solution-panel p{margin:6px 0;color:#cbd5e1;max-width:85ch}
+.sol code{padding:0;background:none;font-size:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}

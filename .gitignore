@@ -4,3 +4,5 @@ Orbit_AI_Engineering 2/
 Vashisht_AI_Study_Dashboard/
 study-dashboard/
 *.pdf
+
+__pycache__/

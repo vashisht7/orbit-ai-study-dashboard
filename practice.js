@@ -10,7 +10,7 @@
 
   /* ---------------- Python harness (runs inside the worker) ---------------- */
   const HARNESS = `
-import json, math, traceback
+import json, math, traceback, inspect
 def _canon(x, cmp):
     if cmp == 'sorted2':
         return sorted([sorted(i) if isinstance(i, list) else i for i in x], key=lambda v: json.dumps(v))
@@ -18,6 +18,8 @@ def _canon(x, cmp):
         return sorted(x)
     return x
 def _approx(a, b):
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(_approx(a[k], b[k]) for k in a)
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
         return len(a) == len(b) and all(_approx(x, y) for x, y in zip(a, b))
     if isinstance(a, (int, float)) and isinstance(b, (int, float)) and not isinstance(a, bool):
@@ -30,7 +32,7 @@ def _eq(a, b, cmp):
         return _canon(a, cmp) == _canon(b, cmp)
     except Exception:
         return False
-def _run_one(t_json, fn, kind, cmp, tree):
+async def _run_one(t_json, fn, kind, cmp, tree):
     t = json.loads(t_json)
     g = globals()
     try:
@@ -44,6 +46,8 @@ def _run_one(t_json, fn, kind, cmp, tree):
             if tree:
                 args = [build_tree(args[0])] + args[1:]
             actual = g[fn](*args)
+            if inspect.isawaitable(actual):
+                actual = await actual
         try:
             actual = json.loads(json.dumps(actual))
         except TypeError:
@@ -75,10 +79,12 @@ onmessage=async ev=>{
       const ns=py.globals.get('dict')(); py.runPython(PRELUDE+HARNESS,{globals:ns});
       try{ await py.runPythonAsync(m.code,{globals:ns}); }catch(e){ postMessage({type:'done',id:m.id,out:buf.join('\\n'),error:clean(e)}); return; }
       if(m.type==='run'){ postMessage({type:'done',id:m.id,out:buf.join('\\n')}); return; }
-      const f=ns.get('_run_one'), p=m.problem;
+      const p=m.problem;
+      ns.set('_fn',p.fn); ns.set('_kind',p.kind); ns.set('_cmp',p.cmp); ns.set('_tree',!!p.tree);
       if(!ns.get(p.fn)){ postMessage({type:'done',id:m.id,out:'',error:'Could not find "'+p.fn+'" - keep the function/class name from the starter code.'}); return; }
       for(let i=0;i<p.tests.length;i++){
-        buf=[]; const r=JSON.parse(f(JSON.stringify(p.tests[i]),p.fn,p.kind,p.cmp,!!p.tree));
+        buf=[]; ns.set('_test_json',JSON.stringify(p.tests[i]));
+        const r=JSON.parse(await py.runPythonAsync('await _run_one(_test_json, _fn, _kind, _cmp, _tree)',{globals:ns}));
         postMessage({type:'progress',id:m.id,i,res:r,out:buf.join('\\n')});
       }
       postMessage({type:'done',id:m.id});
@@ -133,16 +139,29 @@ onmessage=async ev=>{
     const topics = [...new Set(PROBLEMS.map(p => p.topic))].sort();
     const ts = $('#f-topic');
     topics.forEach(t => { const o = document.createElement('option'); o.textContent = t; ts.appendChild(o); });
+    for (const [selector, values] of [
+      ['#f-company', PROBLEMS.flatMap(p => p.sources.map(s => s.company))],
+      ['#f-track', PROBLEMS.map(p => p.track)]
+    ]) {
+      [...new Set(values)].sort().forEach(value => {
+        const option = document.createElement('option'); option.textContent = value; $(selector).appendChild(option);
+      });
+    }
   }
   function filtered() {
     const q = $('#q').value.trim().toLowerCase(), df = $('#f-diff').value, d = +$('#f-day').value, t = $('#f-topic').value;
-    return PROBLEMS.filter(p => (!q || (p.title + ' ' + p.topic).toLowerCase().includes(q)) && (!df || p.diff === df) && (!t || p.topic === t) && matchDay(p, d));
+    const company = $('#f-company').value, track = $('#f-track').value, evidence = $('#f-evidence').value;
+    return PROBLEMS.filter(p => (!q || [p.title, p.topic, p.track, ...p.sources.map(s => s.company)].join(' ').toLowerCase().includes(q))
+      && (!df || p.diff === df) && (!t || p.topic === t) && matchDay(p, d)
+      && (!company || p.sources.some(s => s.company === company))
+      && (!track || p.track === track) && (!evidence || p.evidence === evidence));
   }
   function renderList() {
     const list = filtered();
     $('#plist').innerHTML = list.map(p => `<li><button data-id="${p.id}" class="${cur && cur.id === p.id ? 'active' : ''}">
       <span class="t"><span>${store.solved[p.id] ? '✅ ' : ''}${esc(p.title)}</span><span class="d-${p.diff}">${p.diff}</span></span>
-      <span class="m">${esc(p.topic)} · ${p.tests.length} tests</span></button></li>`).join('') || '<li class="quiet" style="padding:10px">No problems match.</li>';
+      <span class="m">${esc(p.topic)} · ${p.tests.length} tests</span><span class="m">${esc([...new Set(p.sources.map(s => s.company))].join(', ') || 'Profile practice')}</span></button></li>`).join('') || '<li class="quiet" style="padding:10px">No problems match.</li>';
+    $('#match-count').textContent = `${list.length} of ${PROBLEMS.length} problems shown`;
     const solved = PROBLEMS.filter(p => store.solved[p.id]).length;
     $('#solved-count').textContent = `${solved} / ${PROBLEMS.length} solved`;
     $('#solved-fill').style.width = (100 * solved / PROBLEMS.length) + '%';
@@ -150,6 +169,17 @@ onmessage=async ev=>{
   function open(id, pushHash = true) {
     cur = PROBLEMS.find(p => p.id === id) || PROBLEMS[0];
     $('#p-title').textContent = cur.title;
+    $('#p-context').innerHTML = `<span class="pill">${esc(cur.track)}</span> <span class="pill">${esc(cur.evidence)}</span>
+      <p>${esc(cur.relevance)}</p>
+      ${window.HELLO_PROBLEMS[cur.id] ? `<p><a href="${esc(window.HELLO_PROBLEMS[cur.id])}" target="_blank" rel="noopener noreferrer">Open this exercise in Hello Interview ↗</a></p>` : ''}
+      ${cur.sources.length ? `<details><summary>Company evidence · ${esc([...new Set(cur.sources.map(s => s.company))].join(', '))}</summary>
+      ${cur.sources.map(s => `<p><b>${esc(s.company)} · ${esc(s.relation)}</b><br><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a><br>${esc(s.note)} <span class="quiet">Checked ${esc(s.checked)}.</span></p>`).join('')}
+      <p class="quiet">Self-reported historical experience; local wording, examples, and contracts may differ.</p></details>` : '<p class="quiet">Original role-focused practice. No verified company attribution.</p>'}`;
+    $('#p-examples').innerHTML = cur.tests.slice(0, 2).map((t, i) => `<div class="case"><b>Example ${i+1}</b><div>Input: ${esc(fmt(cur.kind === 'class' ? {init:t.init, ops:t.ops} : t.args, 1200))}</div><div>Expected: ${esc(fmt(t.expected, 1200))}</div></div>`).join('');
+    $('#sol-explanation').innerHTML = marked.parse(cur.explanation);
+    $('#sol-code').textContent = cur.solution;
+    $('#show-sol').setAttribute('aria-expanded', 'false');
+    $('#show-sol').textContent = '💡 Reference solution & explanation';
     $('#p-meta').innerHTML = `${esc(cur.topic)} · <span class="d-${cur.diff}">${cur.diff}</span> · ${cur.tests.length} test cases`;
     const html = (window.marked && (marked.parse ? marked.parse(cur.statement) : marked(cur.statement))) || esc(cur.statement);
     $('#p-statement').innerHTML = html;
@@ -221,7 +251,7 @@ onmessage=async ev=>{
       e.preventDefault(); t.setRangeText('\n' + indent, s, t.selectionEnd, 'end');
     }
   });
-  let st; $('#code').addEventListener('input', () => { clearTimeout(st); st = setTimeout(() => { if (cur) { store.code[cur.id] = $('#code').value; save(); } }, 400); });
+  $('#code').addEventListener('input', () => { if (cur) { store.code[cur.id] = $('#code').value; save(); } });
   $('#term-in').addEventListener('keydown', e => {
     if (e.key === 'Tab') { e.preventDefault(); e.target.setRangeText('    ', e.target.selectionStart, e.target.selectionEnd, 'end'); }
     else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); termRun(); }
@@ -230,12 +260,21 @@ onmessage=async ev=>{
 
   /* ---------------- wiring ---------------- */
   buildFilters();
-  ['#q', '#f-diff', '#f-day', '#f-topic'].forEach(s => $(s).addEventListener('input', renderList));
+  ['#q', '#f-diff', '#f-day', '#f-topic', '#f-company', '#f-track', '#f-evidence'].forEach(s => $(s).addEventListener('input', renderList));
   $('#plist').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (b) open(b.dataset.id); });
   $('#run-tests').onclick = runTests; $('#run-code').onclick = runCode; $('#term-run').onclick = termRun;
   $('#term-clear').onclick = () => { $('#term-log').textContent = ''; };
   $('#reset').onclick = () => { if (cur && confirm('Reset to the starter code?')) { delete store.code[cur.id]; save(); $('#code').value = cur.starter; } };
-  $('#show-sol').onclick = () => { const s = $('#sol'); s.textContent = cur.solution; s.hidden = !s.hidden; };
+  $('#show-sol').onclick = () => {
+    const s = $('#sol'); s.hidden = !s.hidden;
+    $('#show-sol').setAttribute('aria-expanded', String(!s.hidden));
+    $('#show-sol').textContent = s.hidden ? '💡 Reference solution & explanation' : 'Hide reference solution';
+  };
+  $('#clear-filters').onclick = () => {
+    ['#q','#f-diff','#f-day','#f-topic','#f-company','#f-track','#f-evidence'].forEach(s => $(s).value = '');
+    renderList();
+  };
+  window.addEventListener('hashchange', () => open(location.hash.slice(1), false));
   $('#toggle-side').onclick = () => $('#side').classList.toggle('open');
   const tab = which => {
     const t = which === 'terminal';

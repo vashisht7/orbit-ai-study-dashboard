@@ -1,6 +1,8 @@
-"""Generates problems-data.js. Expected outputs come from the reference solutions below,
-so test cases are never hand-typed. Run:  python3 tools/gen_problems.py"""
-import json, copy, math, os
+"""Generates problems-data.js. Original exercises retain reference-generated outputs;
+new interview exercises use independently specified expected answers. Run:  python3 tools/gen_problems.py"""
+import json, copy, math, os, inspect, asyncio
+from problem_notes import enrich
+from interview_problems import EXTRA
 
 PRELUDE = '''
 class TreeNode:
@@ -11,9 +13,10 @@ def build_tree(arr):
     """Level-order list (None = missing) -> TreeNode root."""
     if not arr or arr[0] is None:
         return None
-    root = TreeNode(arr[0]); q = [root]; i = 1
+    from collections import deque
+    root = TreeNode(arr[0]); q = deque([root]); i = 1
     while q and i < len(arr):
-        node = q.pop(0)
+        node = q.popleft()
         if i < len(arr) and arr[i] is not None:
             node.left = TreeNode(arr[i]); q.append(node.left)
         i += 1
@@ -55,7 +58,7 @@ add('longest-substring', 'Longest Substring Without Repeating Characters', 'Slid
 add('min-window', 'Minimum Window Substring', 'Sliding window', 'Hard', [3],
  'Return the smallest substring of `s` containing every character of `t` (with multiplicity). Return `""` if none exists.\n\nExample: `s="ADOBECODEBANC", t="ABC"` -> `"BANC"`',
  'min_window', 's, t',
- 'def min_window(s, t):\n    from collections import Counter\n    need = Counter(t); missing = len(t); best = (0, 10**9); l = 0\n    for r, c in enumerate(s):\n        if need[c] > 0: missing -= 1\n        need[c] -= 1\n        if missing == 0:\n            while need[s[l]] < 0: need[s[l]] += 1; l += 1\n            if r - l < best[1] - best[0]: best = (l, r)\n            need[s[l]] += 1; missing += 1; l += 1\n    return "" if best[1] == 10**9 else s[best[0]:best[1]+1]',
+ 'def min_window(s, t):\n    if not t: return \"\"\n    from collections import Counter\n    need = Counter(t); missing = len(t); best = (0, 10**9); l = 0\n    for r, c in enumerate(s):\n        if need[c] > 0: missing -= 1\n        need[c] -= 1\n        if missing == 0:\n            while need[s[l]] < 0: need[s[l]] += 1; l += 1\n            if r - l < best[1] - best[0]: best = (l, r)\n            need[s[l]] += 1; missing += 1; l += 1\n    return "" if best[1] == 10**9 else s[best[0]:best[1]+1]',
  [("ADOBECODEBANC","ABC"),("a","a"),("a","aa"),("ab","b"),("aa","aa"),("cabwefgewcwaefgcf","cae")])
 
 add('merge-intervals', 'Merge Intervals', 'Intervals', 'Medium', [4],
@@ -311,17 +314,29 @@ def run_ref(p):
         if p['tree']:
             a[0] = ns['build_tree'](a[0])
         res = fn(*a)
+        if inspect.isawaitable(res):
+            res = asyncio.run(res)
         if isinstance(res, float) and not math.isfinite(res): raise ValueError(p['id'])
         tests.append(dict(args=list(args), expected=res))
     return tests
 
+for p in P:
+    enrich(p)
+P.extend(EXTRA)
+
 out = []
 for p in P:
     tests = run_ref(p)
-    starter = p.get('starter') or f"def {p['fn']}({p['sig']}):\n    # write your solution here\n    pass\n"
+    if 'expected' in p:
+        for test, expected in zip(tests, p['expected']):
+            # Keep independent answers rather than regenerating them from code.
+            test['expected'] = expected
+    starter = p.get('starter') or ("async " if p["ref"].startswith("async def") else "") + f"def {p['fn']}({p['sig']}):\n    # write your solution here\n    pass\n"
     out.append(dict(id=p['id'], title=p['title'], topic=p['topic'], diff=p['diff'], days=p['days'],
                     statement=p['statement'], fn=p['fn'], kind=p['kind'], cmp=p['cmp'], tree=p['tree'],
-                    starter=starter, solution=p['ref'] + '\n', tests=tests))
+                    starter=starter, solution=p['ref'] + '\n', tests=tests,
+                    explanation=p['explanation'], sources=p['sources'], evidence=p['evidence'],
+                    track=p['track'], relevance=p['relevance']))
 
 here = os.path.dirname(os.path.abspath(__file__))
 dest = os.path.join(here, '..', 'problems-data.js')

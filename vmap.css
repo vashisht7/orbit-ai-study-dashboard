@@ -81,3 +81,7 @@ code{background:rgba(129,140,248,.14);padding:1px 5px;border-radius:5px;font-siz
   .jump{margin-left:0}
   .arrow{display:none}
 }
+#guide-select{max-width:100%;background:var(--panel2);color:var(--text);padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+#coverage .pcard{margin-bottom:12px}#coverage .pcard p{font-size:13px;color:var(--dim)}#coverage .pcard>b{font-size:12px;color:var(--ok)}
+#coverage details{margin-top:15px}#coverage details summary{cursor:pointer;color:#a5b4fc;font-weight:600}#coverage details h3{margin-top:24px}#coverage details p{max-width:90ch;color:#cbd5e1}
+#coverage a{color:#a5b4fc}section{scroll-margin-top:100px}

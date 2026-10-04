@@ -7,15 +7,16 @@
   <title>Visual Map · AI Engineering at a glance</title>
   <link rel="stylesheet" href="vmap.css">
   <script src="plan-data.js"></script>
+  <script src="coding-routes.js"></script>
   <script src="problems-data.js"></script>
   <script defer src="vmap.js"></script>
-</head>
+<link rel="stylesheet" href="learning-guides.css"><script src="lesson-guides.js"></script><script src="learning-guides.js"></script></head>
 <body>
   <header class="bar">
     <a class="back" href="index.html">← Dashboard</a>
     <b>🗺️ Visual Map</b>
     <nav class="jump">
-      <a href="#journey">Journey</a><a href="#concepts">Concepts</a><a href="#diagrams">Diagrams</a><a href="#quant">Quantization</a><a href="#coding">Coding map</a><a href="#site">Site map</a>
+      <a href="#journey">Journey</a><a href="#concepts">Concepts</a><a href="#topic-guide">Topic explorer</a><a href="#coverage">Coverage</a><a href="#diagrams">Diagrams</a><a href="#quant">Quantization</a><a href="#coding">Coding map</a><a href="#site">Site map</a>
     </nav>
     <a class="back" href="practice.html">⌨️ Code Lab</a>
   </header>
@@ -39,6 +40,25 @@
       <div id="concept-map" class="cmap"></div>
     </section>
 
+    <section id="topic-guide">
+      <h2>Explore every lesson visually</h2>
+      <p class="sub">Thirty lessons, thirty diagrams. Choose a topic to see a plain-language explanation and a worked example.</p>
+      <label for="guide-select">AI lesson</label> <select id="guide-select"></select>
+      <div id="guide-card"></div><a id="guide-lesson" class="back">Read the full lesson →</a>
+    </section>
+    <section id="coverage">
+      <h2>What your AI study plan covers</h2>
+      <p class="sub">A review of the 30 lessons against your AI engineer résumé. Coverage means a topic is taught, not that you have mastered it. Specialized ML roles need additional depth.</p>
+      <div id="coverage-grid" class="pgrid"></div>
+      <details class="dcard"><summary>Bridge the remaining gaps · five short study notes</summary>
+        <h3>1. Classical ML and a simple baseline</h3><p>Before choosing an LLM, identify the prediction target and build a simple baseline. Linear regression predicts a number; logistic regression predicts a binary probability; trees split features into regions. Compare on the same held-out data. For a document-routing task, try TF–IDF plus a linear classifier before a costly fine-tune. K-means groups similar points without target labels; cluster IDs are not automatically meaningful categories.</p><p>Try Code Lab’s <a href="practice.html#linear-gradient">gradient step</a>, <a href="practice.html#tfidf">TF–IDF</a>, and <a href="practice.html#kmeans-step">k-means update</a>. Next depth: regularization, tree ensembles, cross-validation, and feature preprocessing.</p>
+        <h3>2. Calibration and controlled experiments</h3><p>A model that says 0.8 confidence should be correct about 80% of the time among comparable predictions at that confidence. Softmax alone does not establish this. Group predictions into probability bins and compare average confidence with observed accuracy. An A/B test instead compares user outcomes after random assignment; decide the success metric and stopping rule before examining results. Correlation in logs does not prove the new model caused an improvement.</p><p>Exercise: explain how a model can rank examples well but have misleading probabilities. Extend <a href="practice.html#classification-metrics">classification metrics</a> with threshold sweeps and confidence bins.</p>
+        <h3>3. SQL and data-pipeline correctness</h3><p>State the meaning of one row before joining data. A one-to-many join can multiply rows and inflate counts. Window functions retain rows while calculating ranks or running totals. For streaming data, event time is when something happened; processing time is when you saw it. Late records require an explicit correction policy. Use stable event IDs to deduplicate retries and reconcile source totals after transformations.</p><p>Try <a href="practice.html#dense-rank">dense ranking</a> and <a href="practice.html#request-dedup">deduplication</a>. Follow with real SQL joins, EXPLAIN plans, Spark partitioning, and a late-event exercise.</p>
+        <h3>4. Distributed training and recovery</h3><p>Data parallelism gives each worker different examples and synchronizes gradients. Model parallelism splits the model across devices when it is too large for one device. Communication can erase expected speedups, so measure it. A resumable checkpoint may need weights, optimizer state, random-generator state, and data position. Saving only weights is useful for inference but does not reproduce the next training step.</p><p>Try <a href="practice.html#resumable-iterator">resumable iteration</a>. Next depth: gradient synchronization, sharding, mixed precision, and checkpoint recovery using actual multi-device tools.</p>
+        <h3>5. Retrieval and multimodal evaluation depth</h3><p>Use exact nearest-neighbor search as a baseline before adopting an approximate index. Measure how often approximate search preserves useful candidates under a latency budget. For images and speech, preserve the original asset and the transformation history; a transcript or caption can omit critical evidence. Recommendation and computer-vision roles additionally need their own datasets, modeling choices, and metrics.</p><p>Compare <a href="practice.html#nearest-neighbors">exact retrieval</a> with <a href="practice.html#recall-at-k">recall@k</a> and <a href="practice.html#ndcg">NDCG</a>. A toy implementation establishes mechanics, not production readiness.</p>
+      </details>
+      <p class="sub">Further study: <a href="https://developers.google.com/machine-learning/crash-course" target="_blank" rel="noopener">Google’s ML curriculum</a> · <a href="https://docs.pytorch.org/tutorials/beginner/basics/intro.html" target="_blank" rel="noopener">PyTorch fundamentals</a>. Review date: October 4, 2026.</p>
+    </section>
     <section id="diagrams">
       <h2>3 · Pipelines, drawn out</h2>
       <p class="sub">Click a step to see what happens there and what interviewers ask about it.</p>
@@ -47,7 +67,7 @@
 
     <section id="quant">
       <h2>4 · Quantization &amp; memory bandwidth — the chart</h2>
-      <p class="sub">Model size = params × bits ÷ 8. At batch size 1, speed ≈ bandwidth ÷ size. Change the device and watch what fits.</p>
+      <p class="sub">Model size = params × bits ÷ 8. At batch size 1, speed ≈ bandwidth ÷ size. Choose an illustrative hardware budget. This estimates weight storage and an ideal bandwidth ceiling, not measured speed or a guarantee that a model fits.</p>
       <div class="qctl"><label>Device memory bandwidth
         <select id="bw">
           <option value="50" data-ram="8">iPhone (A17/A18 Pro) · 50 GB/s · 8 GB RAM</option>
@@ -62,7 +82,7 @@
 
     <section id="coding">
       <h2>5 · Coding patterns → problems</h2>
-      <p class="sub">Every problem opens in the Code Lab with a Python editor and test cases.</p>
+      <p class="sub">Matching lessons open in Hello Interview. Other exercises open directly in Code Lab.</p>
       <div id="coding-map" class="pgrid"></div>
     </section>
 

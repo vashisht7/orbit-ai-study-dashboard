@@ -18,56 +18,79 @@
   /* 2 · concept map */
   const dl = (a, b) => { const o = []; for (let i = a; i <= b; i++) o.push(`<a class="chip" href="index.html#day-${i}">D${i}</a>`); return o.join(''); };
   const C = [
-    ['Foundations', ['Vectors, matrices, dot products', 'Loss, gradients, learning rate', 'Softmax & temperature'], dl(1, 3), 'Your NoteEchoes confidence threshold (0.75) is a softmax cutoff.'],
-    ['Transformers', ['Tokens → embeddings', 'Self-attention (Q,K,V) + causal mask', 'RoPE position, KV cache, GQA'], dl(4, 7), 'Qwen 0.6B: 28 layers, 16 Q-heads / 8 KV-heads.'],
-    ['Prompting & structure', ['In-context learning', 'Constrained / JSON decoding', 'Context engineering'], dl(8, 8), 'CoreV5 schema masks invalid tokens while decoding.'],
-    ['Retrieval & RAG', ['Embeddings & vector search', 'BM25 + dense hybrid, RRF', 'Recall@k vs faithfulness'], dl(9, 14), 'SQLite FTS5 + E5 on device; Ragas/TruLens at BofA.'],
-    ['Agents & safety', ['Tool calling = contract', 'Human-in-the-loop, guardrails', 'Durable state, prompt injection'], dl(15, 18), 'Model proposes, Swift gate + EventKit executes.'],
-    ['Adaptation', ['LoRA / QLoRA / rsLoRA', 'DPO & preference learning', 'Eval-gated merging'], dl(19, 21), 'rsLoRA r=32 α=64 → scale 11.31; NF4 dequantized merge.'],
-    ['Serving & quantization', ['vLLM, PagedAttention, batching', 'INT8 / INT4 (AWQ) / FP8', 'TTFT vs TPOT, capacity planning'], dl(22, 23), 'vLLM on Azure at BofA; INT8 649 MB on iPhone.'],
-    ['On-device AI', ['Unified memory (UMA) zero-copy', 'MLX GPU + ANE for Whisper', 'Bandwidth-bound decoding'], dl(24, 26), 'tokens/s ≈ 50 GB/s ÷ 0.65 GB ≈ 77.'],
-    ['Evaluation & ops', ['Operational vs strict metrics', 'LLMOps, tracing, monitoring', 'Statistics you can defend'], dl(21, 23), '1,200 challenge rows; 100% operational pass.'],
-    ['Interview ready', ['System-design mocks', 'Resume defense drills', 'Coding rounds (Code Lab)'], dl(27, 30), 'Defend the 40% extraction-efficiency claim.']
+    ['Foundations', ['Vectors and matrices', 'Softmax and gradients', 'Training and autograd'], dl(1, 8), 'Understand the small calculations before scaling up.'],
+    ['Transformers', ['Attention and residual paths', 'Position and KV cache', 'Decoding and execution'], dl(9, 12), 'Check the actual model configuration for head counts.'],
+    ['Prompting and structure', ['Task instructions and context', 'Schema and semantic validation'], dl(13, 13), 'Valid JSON can still describe a wrong action.'],
+    ['Retrieval and RAG', ['Embeddings and access filters', 'Chunking, hybrid retrieval, RRF', 'Graph relationships'], dl(14, 16), 'Measure retrieval and answer quality separately.'],
+    ['Agents and safety', ['Tool contracts and authorization', 'Durable state and retries', 'Prompt injection and protocols'], dl(17, 20), 'The application enforces permission to execute.'],
+    ['Evaluation', ['Task success and classification', 'Retrieval metrics', 'Uncertainty and evaluation slices'], dl(21, 21), 'Always state the denominator and test population.'],
+    ['Serving and operations', ['Latency, batching, quantization', 'Versioning and observability', 'Data lifecycle'], dl(22, 23), 'Toy memory estimates are not device benchmarks.'],
+    ['Adaptation', ['LoRA, QLoRA, rsLoRA', 'Preferences and rewards', 'Distillation'], dl(24, 25), 'Re-evaluate the actual deployment artifact.'],
+    ['Multimodal and on-device', ['Audio to text to structured intent', 'Provenance and validation'], dl(26, 26), 'Locate errors at representation boundaries.'],
+    ['Interview and capstone', ['Coding and system design', 'Project evidence', 'Controlled experiments and decoder lab'], dl(27, 30), 'Use readiness checks instead of calendar completion.']
   ];
   $('#concept-map').innerHTML = C.map((c, i) => `<div class="cnode" style="--nc:${WC[i % 5]}"><h4>${esc(c[0])}</h4>
     <ul>${c[1].map(x => `<li>${esc(x)}</li>`).join('')}</ul>${c[2]}<div class="you">🎯 ${esc(c[3])}</div></div>`).join('');
+
+  const guideSelect = $('#guide-select');
+  guideSelect.innerHTML = window.LESSON_GUIDES.map(g => `<option value="${g.day}">Lesson ${g.day} · ${esc(g.title)}</option>`).join('');
+  const showGuide = () => {
+    $('#guide-card').innerHTML = window.renderLessonGuide(Number(guideSelect.value));
+    $('#guide-lesson').href = `index.html#day-${guideSelect.value}`;
+  };
+  guideSelect.addEventListener('change', showGuide);
+  const requestedDay = Number(new URLSearchParams(location.search).get('lesson'));
+  if (requestedDay >= 1 && requestedDay <= 30) guideSelect.value = requestedDay;
+  showGuide();
+  const coverage = [
+    ['Core model mechanics', 'Covered in depth', 2, 12, 'Vectors, losses, training, attention, transformers, and decoding.'],
+    ['RAG and retrieval', 'Covered', 14, 16, 'Embeddings, chunking, fusion, source evidence, and graph trade-offs.'],
+    ['Agents and safety', 'Covered', 17, 20, 'Tool boundaries, retries, state, prompt injection, and interfaces.'],
+    ['Evaluation and statistics', 'Covered; extend experiments', 21, 21, 'Add deeper calibration and controlled A/B practice using the bridge notes.'],
+    ['Serving and operations', 'Covered; extend distributed systems', 22, 23, 'Add hands-on load tests, rollout practice, and distributed training.'],
+    ['Fine-tuning and alignment', 'Covered', 24, 25, 'Adapter mechanics, preference signals, and deployment evaluation.'],
+    ['Multimodal and on-device', 'Introduced', 26, 26, 'Good application overview; specialized vision/audio roles need more modeling depth.'],
+    ['Classical ML, SQL, and Spark', 'Needs a focused second pass', 27, 27, 'Use bridge notes and Code Lab, then practice real datasets, SQL, and Spark jobs.'],
+    ['Project and interview readiness', 'Covered as practice', 27, 30, 'Demonstrate tested behavior and measured results; no automatic readiness guarantee.']
+  ];
+  $('#coverage-grid').innerHTML = coverage.map(([title,status,a,b,note]) => `<article class="pcard"><h4>${esc(title)}</h4><b>${esc(status)}</b><p>${esc(note)}</p>${dl(a,b)}</article>`).join('');
 
   /* 3 · pipelines */
   const D = [
     ['How a token is generated', 'Transformer inference loop', [
       ['📝', 'Text', 'raw input', 'Your prompt as characters.'],
-      ['🔢', 'Tokenizer', 'ids', 'BPE splits text into token ids. Qwen vocab = 151,936 → embedding table ≈ 155 MB at INT8.'],
-      ['📍', 'Embed + RoPE', 'vectors', 'Each id becomes a vector (d=1024). RoPE rotates Q/K so attention knows relative position.'],
+      ['🔢', 'Tokenizer', 'ids', 'The tokenizer maps text to vocabulary IDs. Vocabulary size and embedding storage depend on the exact checkpoint and representation.'],
+      ['📍', 'Embed + RoPE', 'vectors', 'Each ID becomes a learned vector. RoPE modifies queries and keys inside attention to represent position.'],
       ['🔍', 'Attention', 'Q·Kᵀ', 'Each token scores every earlier token: <span class="formula">softmax(QKᵀ/√d)·V</span>. Causal mask hides the future. K,V are cached.'],
       ['🧮', 'MLP ×28', 'layers', 'Per-token feed-forward. Attention + MLP repeat once per layer (28 in Qwen 0.6B).'],
       ['🎲', 'Logits → sample', 'softmax', 'Final vector → vocab scores → softmax(temperature) → pick next token, append, and loop.'],
-      ['🔁', 'KV cache', 'reuse', 'Only the new token is computed; old K,V are read from cache. <span class="formula">2·L·H_kv·D_h·T·2 bytes</span> = 112 KB/token for NoteEchoes.']]],
+      ['🔁', 'KV cache', 'reuse', 'Only the new token is computed; old K,V are read from cache. <span class="formula">2·L·H_kv·D_h·T·2 bytes</span> is a generic estimate. Read layer count, KV heads, head dimension, and precision from your checkpoint.']]],
     ['RAG end to end', 'Retrieve, then answer with evidence', [
       ['📄', 'Documents', 'source', 'PDFs, notes, filings.'],
-      ['✂️', 'Chunk', '200-500 tok', 'Split with overlap. Bad chunking is the #1 hidden cause of "hallucination".'],
+      ['✂️', 'Chunk', '200-500 tok', 'Split with overlap. Poor chunk boundaries can hide relevant evidence; diagnose retrieval before choosing a fix.'],
       ['🧬', 'Embed + index', 'dense + BM25', 'E5 vectors for meaning, BM25/FTS5 for exact names. Keep both.'],
       ['❓', 'Query', 'user ask', 'Optionally rewrite the query.'],
       ['🔀', 'Hybrid + RRF', 'fuse ranks', '<span class="formula">score = Σ 1/(60 + rank)</span>. No score normalization needed.'],
-      ['🏅', 'Rerank', 'cross-encoder', 'Re-score top-25 jointly with the query (+35% on messy tables at BofA).'],
+      ['🏅', 'Rerank', 'cross-encoder', 'Re-score candidate documents jointly with the query. Measure the quality gain and added latency on your dataset.'],
       ['🤖', 'LLM answers', 'grounded', 'Prompt holds only retrieved evidence. Instruct: say "not found" if absent.'],
-      ['📏', 'Evaluate', 'Recall@k · Faithfulness', 'Recall@k=0 → retrieval bug. Evidence present but wrong answer → generation bug (TruLens groundedness).']]],
+      ['📏', 'Evaluate', 'Recall@k · Faithfulness', 'Low recall suggests inspecting retrieval and ground truth. If useful evidence is present, inspect context packing and generation next.']]],
     ['Fine-tuning with LoRA / QLoRA', 'What you did for NoteEchoes & BofA', [
       ['🧊', 'Frozen base', 'NF4 4-bit', 'QLoRA stores base weights in 4-bit NormalFloat + double quantization; they are never updated.'],
-      ['➕', 'Add A·B', 'rank r=32', 'Train two small matrices: ΔW = B·A. Params drop by ~100×.'],
+      ['➕', 'Add A·B', 'rank r=32', 'Train two small matrices: ΔW = B·A. Parameter savings depend on matrix dimensions and the chosen rank.'],
       ['⚖️', 'Scale', 'α/√r', 'LoRA scales by α/r; <b>rsLoRA</b> by α/√r so high ranks stay stable: 64/√32 = 11.31.'],
-      ['🏋️', 'Train', 'off-device', 'Backprop stores activations ≈ 3× inference RAM, so train on Mac/cloud, never on iPhone.'],
+      ['🏋️', 'Train', 'off-device', 'Training needs gradients, optimizer state, and saved activations. Its memory budget depends on the training method and model.'],
       ['🔗', 'Merge', 'dequantized base', 'Merge onto the <b>dequantized NF4</b> base (not plain FP16) → matches training behaviour; eval gates pass.'],
       ['📦', 'Quantize + ship', 'INT8 MLX', 'group-64 INT8 → 649 MB package, pinned commit + SHA-256.']]],
     ['Cloud serving with vLLM', 'Bank of America stack', [
       ['📥', 'Requests', 'many users', 'Prompts arrive at random times and lengths.'],
       ['🗓️', 'Scheduler', 'continuous batching', 'Each step it re-forms the batch: finished requests leave, new ones join (iteration-level).'],
-      ['⚙️', 'Prefill', 'compute-bound', 'Process the whole prompt in parallel. Chunked prefill (512 tok) stops one big prompt from stalling others.'],
+      ['⚙️', 'Prefill', 'compute-bound', 'Process the whole prompt in parallel. Chunked prefill splits prompt processing into scheduler-sized pieces to balance waiting and ongoing generation.'],
       ['📖', 'Decode', 'memory-bound', 'One token per step; reads all weights + KV. Batching raises arithmetic intensity.'],
-      ['🧱', 'PagedAttention', 'KV blocks', 'KV cache split into fixed blocks like OS pages → no fragmentation, prefix sharing, 2-4× throughput.'],
+      ['🧱', 'PagedAttention', 'KV blocks', 'KV cache split into fixed blocks like OS pages → less wasted allocation and possible prefix sharing; performance gains depend on workload.'],
       ['📡', 'Stream out', 'TTFT · TPOT', 'TTFT = wait to first token; TPOT = gap between tokens. Optimize both under load.']]],
     ['NoteEchoes on-device pipeline', 'Voice → approved reminder', [
       ['🎙️', 'Microphone', '16 kHz PCM', 'Audio stays on device (privacy).'],
-      ['🧠', 'Whisper', 'Apple Neural Engine', 'Fixed-shape encoder-decoder → ANE at ~1-2 W.'],
+      ['🧠', 'Whisper', 'Apple Neural Engine', 'Speech-to-text execution and power depend on the actual model, runtime, and hardware; measure the deployed build.'],
       ['🔤', 'Tokenizer', 'unified RAM', 'Text → ids; shared buffers (UMA, zero copy).'],
       ['🍎', 'Qwen 0.6B', 'MLX · GPU · INT8', 'Autoregressive decode on GPU. <span class="formula">tokens/s ≈ 50 GB/s ÷ 0.65 GB ≈ 77</span>.'],
       ['✅', 'CoreV5 validator', 'schema', 'Strict JSON envelope: intent, ISO time, confidence. Below 0.75 → ask to clarify.'],
@@ -102,9 +125,9 @@
     $('#qchart').innerHTML = MODELS.map(([name, p]) => `<div class="qrow"><b>${esc(name)}</b><div class="bars">${BITS.map(([bn, b]) => {
       const gb = p * b / 8, fit = gb * 1.1 <= usable, tps = bw / gb;
       return `<div class="bar-line"><div class="track"><div class="fill ${fit ? 'fit' : 'nofit'}" style="width:${scale(gb)}%">${bn} · ${gb < 10 ? gb.toFixed(2) : gb.toFixed(1)} GB</div><div class="ram" style="left:${scale(usable)}%" title="usable memory"></div></div>
-      <div class="tps">${fit ? '≈ <b>' + (tps >= 10 ? Math.round(tps) : tps.toFixed(1)) + '</b> tokens/s' : '✗ does not fit'}</div></div>`;
+      <div class="tps">${fit ? 'Ideal ceiling ≈ <b>' + (tps >= 10 ? Math.round(tps) : tps.toFixed(1)) + '</b> tokens/s' : '✗ does not fit'}</div></div>`;
     }).join('')}</div></div>`).join('');
-    $('#qnote').textContent = ` · white line = usable memory (~${usable.toFixed(0)} GB); bars use a log scale.`;
+    $('#qnote').textContent = ` · white line = assumed usable memory (~${usable.toFixed(0)} GB); log-scale weight bars. KV cache, runtime, and real device limits require measurement.`;
   }
   $('#bw').addEventListener('input', drawQ); drawQ();
 
@@ -112,7 +135,7 @@
   const byTopic = {};
   PROBLEMS.forEach(p => (byTopic[p.topic] = byTopic[p.topic] || []).push(p));
   $('#coding-map').innerHTML = Object.keys(byTopic).sort().map(t => `<div class="pcard"><h4>${esc(t)}</h4>${byTopic[t].map(p =>
-    `<a class="pl" href="practice.html#${p.id}"><span>${esc(p.title)}</span><span class="d-${p.diff}">${p.diff}</span></a>`).join('')}</div>`).join('');
+    `<a class="pl" href="${window.HELLO_PROBLEMS[p.id] || 'practice.html#' + p.id}" ${window.HELLO_PROBLEMS[p.id] ? 'target="_blank" rel="noopener"' : ''}><span>${esc(p.title)} · ${window.HELLO_PROBLEMS[p.id] ? 'Hello Interview ↗' : 'Code Lab'}</span><span class="d-${p.diff}">${p.diff}</span></a>`).join('')}</div>`).join('');
 
   /* 6 · site map */
   const S = [

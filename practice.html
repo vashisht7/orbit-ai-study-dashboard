@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="practice.css">
   <script src="reader/vendor/marked.js"></script>
   <script src="plan-data.js"></script>
+  <script src="coding-routes.js"></script>
   <script src="problems-data.js"></script>
   <script defer src="practice.js"></script>
 </head>
@@ -26,12 +27,17 @@
   <main id="problems-view" class="layout">
     <aside class="side" id="side">
       <div class="filters">
-        <input id="q" type="search" placeholder="Search (e.g. rain, heap, dp)…" aria-label="Search problems">
+        <input id="q" type="search" placeholder="Search title, company, or topic…" aria-label="Search problems">
         <div class="row">
           <select id="f-diff" aria-label="Difficulty"><option value="">Any difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
           <select id="f-day" aria-label="Study day"><option value="">All days</option></select>
         </div>
         <select id="f-topic" aria-label="Topic"><option value="">All topics</option></select>
+        <select id="f-company" aria-label="Company"><option value="">All reported companies</option></select>
+        <select id="f-track" aria-label="Study track"><option value="">All study tracks</option></select>
+        <select id="f-evidence" aria-label="Evidence type"><option value="">All evidence types</option><option>Reported / adapted</option><option>Profile practice</option></select>
+        <button id="clear-filters" class="subtle">Clear filters</button>
+        <p id="match-count" class="quiet" aria-live="polite"></p>
         <div class="progress"><span id="solved-count">0 / 0 solved</span><div class="track"><i id="solved-fill"></i></div></div>
       </div>
       <ul id="plist" class="plist"></ul>
@@ -39,6 +45,14 @@
 
     <section class="work">
       <button id="toggle-side" class="subtle mobile-only">☰ Problem list</button>
+      <details class="study-guide">
+        <summary>Your AI engineer interview study bank · 80 problems</summary>
+        <p>Built around your included résumé: five years of Python, production RAG, LLM serving, backend APIs, and Spark/SQL experience. Research checked October 4, 2026.</p>
+        <ol><li><b>Coding fundamentals:</b> learn hashing, windows, trees, graphs, heaps, and dynamic programming. Start with Easy, then tackle Medium.</li><li><b>Practical backend:</b> practice caches, iterators, request processing, and async workers. Explain failure cases as you code.</li><li><b>AI / ML implementation:</b> implement retrieval, metrics, stable math, attention, and batching. Relate each to a project.</li></ol>
+        <p>For each problem: try it yourself, run tests, read the walkthrough, then solve it again without the reference. Existing day filters still follow your 30-day plan.</p>
+        <p><b>Evidence matters:</b> company tags link to public candidate reports, which are historical, self-reported, and may describe another level or role. Exercises use original wording and explicit local contracts. “Related reported variant” means the exact task differs. “Profile practice” is additional role preparation without a verified company attribution. This is a curated bank, not an exhaustive or guaranteed future question list.</p>
+        <p><a href="https://www.amazon.jobs/content/en-gb/how-we-hire/interview-prep/software-development-topics" target="_blank" rel="noopener noreferrer">Amazon’s official preparation topics</a> · <a href="https://www.anthropic.com/careers" target="_blank" rel="noopener noreferrer">Anthropic’s technical interview guidance</a></p>
+      </details>
       <div class="prob-head">
         <div>
           <p class="eyebrow" id="p-meta"></p>
@@ -46,8 +60,10 @@
         </div>
         <span id="p-solved" class="solved" hidden>✓ Solved</span>
       </div>
+      <div id="p-context" class="problem-context"></div>
       <div id="p-statement" class="statement"></div>
 
+      <details class="examples"><summary>Example test cases</summary><div id="p-examples"></div></details>
       <div class="editor-wrap">
         <div class="editor-bar">
           <span>solution.py</span>
@@ -59,9 +75,14 @@
         <button id="run-tests" class="primary">▶ Run tests</button>
         <button id="run-code" class="subtle">Run code (print output)</button>
         <button id="reset" class="subtle">↺ Reset</button>
-        <button id="show-sol" class="subtle">💡 Reference solution</button>
+        <button id="show-sol" class="subtle" aria-expanded="false" aria-controls="sol">💡 Reference solution</button>
       </div>
-      <pre id="sol" class="sol" hidden></pre>
+      <section id="sol" class="solution-panel" hidden aria-label="Reference solution and explanation">
+        <h2>Understand the solution</h2>
+        <div id="sol-explanation"></div>
+        <h3>Reference Python code</h3>
+        <pre class="sol"><code id="sol-code"></code></pre>
+      </section>
       <div id="results" class="results" aria-live="polite"></div>
     </section>
   </main>

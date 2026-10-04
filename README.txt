@@ -11,3 +11,23 @@ The advanced dark reference reader is included in reader/index.html. Daily AI as
 Easy learning edition: open cheatsheet.html for all 27 topics with NoteEchoes examples, model-process.html for the model walkthrough, or NoteEchoes_AI_Cheatsheet.pdf for the complete 38-page dark PDF.
 
 Start here: beginner/index.html. The new 30-lesson beginner course includes a 71-page PDF, 29 small runnable labs, an optional tested PyTorch decoder, plain-language math and interactive parameter experiments. Spend 20 minutes reading, 15 minutes running and changing one example, and 10 minutes explaining it aloud. Repeat a lesson when needed; 30 sessions need not mean 30 calendar days. The earlier book and cheat sheet remain available as references.
+
+
+Code Lab expansion (October 4, 2026): 80 Python exercises with walkthroughs,
+complexity, pitfalls, follow-ups, profile relevance, and company-source links.
+Company reports are historical/self-reported; role practice is labeled separately.
+Use company, topic, study-track, difficulty, and day filters.
+
+Daily exercise routing is maintained in coding-routes.js against the public Hello
+Interview catalog. Exact matching lessons use Hello Interview; local practical
+exercises and mocks open specific Code Lab problems. The unsorted Two Sum and
+local array-merge contracts are different from the external sorted/linked-list variants.
+
+Each of the 30 beginner lessons has a shared simple explanation and clickable
+flow diagram, also available in Visual Map's topic explorer. Visual Map includes
+a coverage review and five bridge notes for areas needing a second study pass.
+
+Maintain problem content in tools/gen_problems.py, tools/interview_problems.py,
+and tools/problem_notes.py, then run python3 tools/gen_problems.py. Validate with
+python3 tools/check_problems.py. The original 40 have generated expected results;
+the 40 added problems have independently specified expected results.

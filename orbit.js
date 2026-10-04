@@ -1333,6 +1333,7 @@ function showReading() {
   if (mode === 'read') {
     $('#reading').innerHTML = `
       <p class="eyebrow">${esc(c.part.toUpperCase())} · LESSON ${selected}</p>
+      ${window.renderLessonGuide(selected)}
       ${noteLensCard()}
       <div id="experiment"></div>
       ${render(c.body)}
@@ -1411,6 +1412,7 @@ function show() {
             <span>Reveal Technical Talking Points</span>
             <span class="defense-arrow">▾</span>
           </summary>
+          <p class="quiet">Study prompts, not verified project evidence. Before using a number or implementation detail in an interview, check your actual configuration and evaluation report. State your own measured contribution.</p>
           <ul class="defense-points">
             ${rd.points.map(pt => `<li>${esc(pt)}</li>`).join('')}
           </ul>
@@ -1439,10 +1441,11 @@ function show() {
     }
   }
 
+  const codingRoute = window.CODING_ROUTES[selected];
   const tasks = [
     ['reading', 'AI Reading & Comprehension', '45 min', 'Read carefully, test the parameter experiment, and work through numbers.', '#reading', 'Read on this page', 100],
     ['localai', 'Everyday Local AI Concept', '15 min', d.local_ai || 'Master on-device model inference, Apple Silicon UMA memory, and sandbox boundary.', '#reading', 'Open NoteEchoes Lab ⚡', 70],
-    ['coding', 'LeetCode / Algorithmic Coding', '60 min', d.coding, d.code, 'Open Hello Interview ↗', 120],
+    ['coding', 'LeetCode / Algorithmic Coding', '60 min', d.coding, codingRoute.url, 'Open ' + codingRoute.provider + (codingRoute.provider === 'Hello Interview' ? ' ↗' : ' →'), 120],
     ['design', 'System Design Practice', '45 min', d.label, d.design, 'Open design lesson ↗', 100],
     ['lab', 'Hands-on Python Lab', '20 min', 'Predict the output. Run this lesson’s Python lab script. Change one setting.', 'beginner/labs/' + c.lab, 'Download Python lab ↓', 80],
     ['recall', 'Explain & Recall Flashcards', '10 min', 'Answer the lesson questions aloud, then write one key takeaway.', '#reading', 'Open recall cards', 60]
@@ -1489,11 +1492,10 @@ function show() {
 
   const codingTask = document.querySelector('.task[data-task="coding"]');
   if (codingTask) {
-    const lab = document.createElement('a');
-    lab.href = 'practice.html?day=' + selected;
-    lab.className = 'codelab-link';
-    lab.textContent = '⌨️ Practice in Code Lab (editor + test cases) →';
-    codingTask.appendChild(lab);
+    const note = document.createElement('p');
+    note.className = 'quiet';
+    note.textContent = codingRoute.reason;
+    codingTask.appendChild(note);
   }
 
   $('#evidence').textContent = d.evidence;
