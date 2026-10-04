@@ -1,8 +1,9 @@
 """Generates problems-data.js. Original exercises retain reference-generated outputs;
 new interview exercises use independently specified expected answers. Run:  python3 tools/gen_problems.py"""
-import json, copy, math, os, inspect, asyncio
+import json, copy, math, os, inspect, asyncio, ast
 from problem_notes import enrich
 from interview_problems import EXTRA
+from solution_baselines import BASELINES
 
 PRELUDE = '''
 class TreeNode:
@@ -326,6 +327,8 @@ P.extend(EXTRA)
 
 out = []
 for p in P:
+    # Expand semicolons and inline branches into readable, executable lines.
+    p['ref'] = ast.unparse(ast.parse(p['ref']))
     tests = run_ref(p)
     if 'expected' in p:
         for test, expected in zip(tests, p['expected']):
@@ -335,7 +338,7 @@ for p in P:
     out.append(dict(id=p['id'], title=p['title'], topic=p['topic'], diff=p['diff'], days=p['days'],
                     statement=p['statement'], fn=p['fn'], kind=p['kind'], cmp=p['cmp'], tree=p['tree'],
                     starter=starter, solution=p['ref'] + '\n', tests=tests,
-                    explanation=p['explanation'], sources=p['sources'], evidence=p['evidence'],
+                    explanation='### Start with a straightforward approach\n' + BASELINES[p['id']] + '\n\n' + p['explanation'], sources=p['sources'], evidence=p['evidence'],
                     track=p['track'], relevance=p['relevance']))
 
 here = os.path.dirname(os.path.abspath(__file__))

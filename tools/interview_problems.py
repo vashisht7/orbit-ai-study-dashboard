@@ -625,3 +625,71 @@ problem('bounded-async','Bounded Async Workers','Async Python','Medium',[25], 'v
      return result
  ''', [(([3,1,2],2),[9,1,4]),(([],3),[]),(([-2,0],1),[4,0]),(([1,2],9),[1,4]),(([2,2,2],2),[4,4,4])],
  ('Create a fixed number of workers sharing a plain iterator. Taking the next job has no await, so one event-loop thread assigns each index exactly once. Store results by index to retain input order.', 'Two workers take indices 0 and 1; when one finishes it takes index 2. Completion order need not match output order.', 'O(n) work and O(n+limit) space; simulated yields do not parallelize CPU computation.', 'Creating one task per item with a semaphore bounds active work but still allocates n tasks. This version bounds task count too.', 'Add cancellation, per-item failures, real network I/O, and a queue for streaming input.'),track='Practical backend',relevance='Directly rehearses the asynchronous retrieval pipelines on your résumé.')
+
+# Narrow additions from the latest resume: no existing project facts are rewritten.
+problem('confidence-abstention','Choose an Action or Abstain','Decision models','Medium',[21,27], 'scores, threshold, margin',
+ 'scores contains nonnegative class scores that sum to 1, in class-index order. Return the best class index only if its score is at least threshold AND its lead over the second-best is at least margin. Otherwise return −1. Empty scores abstain; a single class has runner-up score 0. Ties prefer the smaller index, but must still meet the margin. threshold and margin are nonnegative. These scores are not guaranteed calibrated.',
+ '''
+ def solve(scores, threshold, margin):
+     if not scores:
+         return -1
+     order = sorted(range(len(scores)), key=lambda i: (-scores[i], i))
+     best = order[0]
+     second = scores[order[1]] if len(order) > 1 else 0.0
+     if scores[best] >= threshold and scores[best] - second >= margin:
+         return best
+     return -1
+ ''', [(([0.1,0.8,0.1],0.7,0.2),1),(([0.49,0.51],0.5,0.1),-1),(([],0.5,0.1),-1),(([1.0],0.9,0.1),0),(([0.5,0.5],0.5,0),0),(([0.4,0.6],0.7,0.1),-1)],
+ ('Separate ranking from permission to act. Find the best candidate, then apply both an absolute threshold and a minimum lead over the runner-up. This is a policy example, not proof that scores are calibrated.', '[0.49,0.51] ranks class 1 first, but a required lead of 0.1 rejects the choice because the observed lead is only 0.02.', 'O(c log c) time and O(c) space for c classes; a single pass can find the best two in O(c).', 'A winning score is not automatically reliable enough for execution. Keep abstention separate from downstream authorization.', 'Measure coverage versus error rate on held-out data; tune thresholds on validation data and test calibration.'),track='AI / ML implementation',relevance='Fills the confidence-based abstention practice gap highlighted by MFlash in your latest résumé.')
+
+problem('field-validation','Validate Extracted Document Fields','Validation / JSON','Medium',[13,23], 'records, required',
+ 'records is a list of flat dictionaries. required lists unique field names. A required field is valid only if present with a nonempty string after trimming whitespace. Return a list of sorted invalid-field names for each record. Extra fields are ignored; 0, None, booleans, lists and dictionaries are invalid. This checks field shape, not the truth of OCR content.',
+ '''
+ def solve(records, required):
+     result = []
+     for record in records:
+         invalid = []
+         for field in required:
+             value = record.get(field)
+             if not isinstance(value, str) or not value.strip():
+                 invalid.append(field)
+         result.append(sorted(invalid))
+     return result
+ ''', [(([{'name':'Ada','date':'  '},{'name':'Bob','date':'2026-10-04'}],['name','date']),[['date'],[]]),(([{}],['id']),[['id']]),(([],['id']),[]),(([{'id':0},{'id':None},{'id':True}],['id']),[['id'],['id'],['id']]),(([{'id':' x '}],['id']),[[]])],
+ ('Inspect each required field, distinguish a real string from other types, then check trimmed content. Report every invalid field so callers can fix a record in one pass.', 'A record with name="Ada" and date="  " has the field but no useful date string, so report ["date"].', 'O(total inspected string length + n·r log r) time, O(nr) output space in the worst case.', 'A nonempty string such as "not a date" passes this shape check. Domain-specific date and business-rule validation must follow.', 'Add typed schemas, field provenance, row-level error receipts, and tests for Excel date/null conversion.'),track='Practical backend',relevance='Fills a hands-on validation gap for your OCR, Excel-to-JSON, and enterprise submission workflows.')
+
+problem('action-receipts','Idempotent Action Receipts','State / APIs','Medium',[17,18], 'requests',
+ 'Each request is [operation_id,payload_string,authorized,cancelled]. Process sequentially and return "denied", "cancelled", "executed", "replayed", or "conflict" per request. Check authorization first, then cancellation. An eligible unseen ID executes and stores its payload; the same ID and payload replays, while the same ID with a different payload conflicts. Denied/cancelled requests store nothing. This is an in-memory simulation, not a real file operation.',
+ '''
+ def solve(requests):
+     receipts = {}
+     result = []
+     for operation_id, payload, authorized, cancelled in requests:
+         if not authorized:
+             result.append("denied")
+         elif cancelled:
+             result.append("cancelled")
+         elif operation_id in receipts:
+             result.append("replayed" if receipts[operation_id] == payload else "conflict")
+         else:
+             receipts[operation_id] = payload
+             result.append("executed")
+     return result
+ ''', [(([['a','move x',True,False],['a','move x',True,False],['a','move y',True,False]],),['executed','replayed','conflict']),(([['a','x',False,False],['a','x',True,False]],),['denied','executed']),(([['a','x',True,True],['a','x',True,False]],),['cancelled','executed']),(([],),[]),(([['a','x',False,True]],),['denied'])],
+ ('Keep a receipt that binds each operation ID to its exact payload. Authorization and cancellation checks precede receipt handling; only eligible new operations are recorded as executed.', 'Request ID a with payload "move x" executes once. Retrying it replays the receipt. Reusing a for "move y" is a conflict, not another operation.', 'O(n) expected map operations plus string comparison costs; O(u) retained receipts for u executed IDs, excluding payload lengths.', 'An in-memory receipt cannot make a real external file write atomic with saving the receipt. Crash recovery and concurrent requests need additional design.', 'Bind approval to payload hashes; use durable receipts, atomic state transitions, cancellation checkpoints, and reversible operations.'),track='Practical backend',relevance='Adds explicit receipt, cancellation, and idempotent-retry practice from MFlash without changing existing project descriptions.')
+
+problem('pagerank-step','One PageRank Update','Graphs / ranking','Medium',[16,23], 'links, ranks, damping',
+ 'links[i] lists unique outgoing destination indices from node i; all indices are valid. ranks is a nonempty list of nonnegative scores summing to 1, with one score per node. Return one PageRank update with 0≤damping≤1. Distribute dangling-node mass uniformly; each node also receives teleport mass (1−damping)/n.',
+ '''
+ def solve(links, ranks, damping):
+     n = len(ranks)
+     dangling = sum(ranks[i] for i in range(n) if not links[i])
+     updated = [(1 - damping) / n + damping * dangling / n for _ in range(n)]
+     for i, destinations in enumerate(links):
+         if destinations:
+             share = damping * ranks[i] / len(destinations)
+             for destination in destinations:
+                 updated[destination] += share
+     return updated
+ ''', [(([[1],[0]],[0.5,0.5],0.85),[0.5,0.5]),(([[1],[]],[0.5,0.5],1),[0.25,0.75]),(([[],[]],[0.5,0.5],0.85),[0.5,0.5]),(([[0]],[1.0],0.85),[1.0]),(([[1],[0]],[0.9,0.1],0),[0.5,0.5])],
+ ('Distribute each node’s old rank across its outgoing edges, reserve teleport probability, and redistribute rank from dangling nodes uniformly. Every contribution uses the old ranks.', 'With ranks [0.5,0.5], links 0→1 and node 1 dangling, and damping 1: dangling mass adds 0.25 to both, then node 0 gives 0.5 to node 1, producing [0.25,0.75].', 'O(V+E) time and O(V) output space.', 'Updating ranks in place mixes iteration states. Dropping dangling mass makes the total rank shrink below one.', 'Iterate until convergence; compare link importance with semantic relevance in summarization.'),track='AI / ML implementation',relevance='Adds explicit PageRank implementation practice for the summarization pipelines on your résumé.',cmp='approx')

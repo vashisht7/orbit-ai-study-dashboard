@@ -178,6 +178,7 @@ onmessage=async ev=>{
     $('#p-examples').innerHTML = cur.tests.slice(0, 2).map((t, i) => `<div class="case"><b>Example ${i+1}</b><div>Input: ${esc(fmt(cur.kind === 'class' ? {init:t.init, ops:t.ops} : t.args, 1200))}</div><div>Expected: ${esc(fmt(t.expected, 1200))}</div></div>`).join('');
     $('#sol-explanation').innerHTML = marked.parse(cur.explanation);
     $('#sol-code').textContent = cur.solution;
+    window.mountSolutionWalkthrough(cur);
     $('#show-sol').setAttribute('aria-expanded', 'false');
     $('#show-sol').textContent = '💡 Reference solution & explanation';
     $('#p-meta').innerHTML = `${esc(cur.topic)} · <span class="d-${cur.diff}">${cur.diff}</span> · ${cur.tests.length} test cases`;
@@ -267,6 +268,8 @@ onmessage=async ev=>{
   $('#reset').onclick = () => { if (cur && confirm('Reset to the starter code?')) { delete store.code[cur.id]; save(); $('#code').value = cur.starter; } };
   $('#show-sol').onclick = () => {
     const s = $('#sol'); s.hidden = !s.hidden;
+    if (s.hidden) window.pauseSolutionWalkthrough();
+    else window.mountSolutionWalkthrough(cur);
     $('#show-sol').setAttribute('aria-expanded', String(!s.hidden));
     $('#show-sol').textContent = s.hidden ? '💡 Reference solution & explanation' : 'Hide reference solution';
   };

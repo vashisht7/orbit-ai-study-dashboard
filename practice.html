@@ -6,10 +6,13 @@
   <meta name="color-scheme" content="dark">
   <title>Code Lab · Python practice with test cases</title>
   <link rel="stylesheet" href="practice.css">
+  <link rel="stylesheet" href="solution-walkthrough.css">
   <script src="reader/vendor/marked.js"></script>
   <script src="plan-data.js"></script>
   <script src="coding-routes.js"></script>
   <script src="problems-data.js"></script>
+  <script src="walkthroughs-data.js"></script>
+  <script src="solution-walkthrough.js"></script>
   <script defer src="practice.js"></script>
 </head>
 <body>
@@ -46,9 +49,10 @@
     <section class="work">
       <button id="toggle-side" class="subtle mobile-only">☰ Problem list</button>
       <details class="study-guide">
-        <summary>Your AI engineer interview study bank · 80 problems</summary>
+        <summary>Your AI engineer interview study bank · 84 problems</summary>
         <p>Built around your included résumé: five years of Python, production RAG, LLM serving, backend APIs, and Spark/SQL experience. Research checked October 4, 2026.</p>
         <ol><li><b>Coding fundamentals:</b> learn hashing, windows, trees, graphs, heaps, and dynamic programming. Start with Easy, then tackle Medium.</li><li><b>Practical backend:</b> practice caches, iterators, request processing, and async workers. Explain failure cases as you code.</li><li><b>AI / ML implementation:</b> implement retrieval, metrics, stable math, attention, and batching. Relate each to a project.</li></ol>
+        <p><b>New focused practice:</b> action abstention, document-field validation, idempotent receipts, and PageRank fill gaps identified in the latest résumé. Existing lessons and project claims have not been rewritten from that résumé.</p>
         <p>For each problem: try it yourself, run tests, read the walkthrough, then solve it again without the reference. Existing day filters still follow your 30-day plan.</p>
         <p><b>Evidence matters:</b> company tags link to public candidate reports, which are historical, self-reported, and may describe another level or role. Exercises use original wording and explicit local contracts. “Related reported variant” means the exact task differs. “Profile practice” is additional role preparation without a verified company attribution. This is a curated bank, not an exhaustive or guaranteed future question list.</p>
         <p><a href="https://www.amazon.jobs/content/en-gb/how-we-hire/interview-prep/software-development-topics" target="_blank" rel="noopener noreferrer">Amazon’s official preparation topics</a> · <a href="https://www.anthropic.com/careers" target="_blank" rel="noopener noreferrer">Anthropic’s technical interview guidance</a></p>
@@ -80,6 +84,7 @@
       <section id="sol" class="solution-panel" hidden aria-label="Reference solution and explanation">
         <h2>Understand the solution</h2>
         <div id="sol-explanation"></div>
+        <div id="solution-walkthrough"></div>
         <h3>Reference Python code</h3>
         <pre class="sol"><code id="sol-code"></code></pre>
       </section>
