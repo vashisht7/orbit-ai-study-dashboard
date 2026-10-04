@@ -1487,6 +1487,15 @@ function show() {
     };
   }
 
+  const codingTask = document.querySelector('.task[data-task="coding"]');
+  if (codingTask) {
+    const lab = document.createElement('a');
+    lab.href = 'practice.html?day=' + selected;
+    lab.className = 'codelab-link';
+    lab.textContent = '⌨️ Practice in Code Lab (editor + test cases) →';
+    codingTask.appendChild(lab);
+  }
+
   $('#evidence').textContent = d.evidence;
   $('#notes').value = dayState().notes || '';
   $('#next-day').disabled = selected === 30;

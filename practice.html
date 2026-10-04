@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Code Lab · Python practice with test cases</title>
+  <link rel="stylesheet" href="practice.css">
+  <script src="reader/vendor/marked.js"></script>
+  <script src="plan-data.js"></script>
+  <script src="problems-data.js"></script>
+  <script defer src="practice.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <a class="back" href="index.html">← Dashboard</a>
+    <b class="title">⌨️ Code Lab</b>
+    <nav class="tabs" role="tablist">
+      <button id="tab-problems" role="tab" aria-selected="true">🧩 Problems</button>
+      <button id="tab-terminal" role="tab" aria-selected="false">🖥️ Python terminal</button>
+    </nav>
+    <a class="back" href="visual-map.html">🗺️ Visual map</a>
+    <span id="py-status" class="pill">Python: not loaded</span>
+  </header>
+
+  <main id="problems-view" class="layout">
+    <aside class="side" id="side">
+      <div class="filters">
+        <input id="q" type="search" placeholder="Search (e.g. rain, heap, dp)…" aria-label="Search problems">
+        <div class="row">
+          <select id="f-diff" aria-label="Difficulty"><option value="">Any difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+          <select id="f-day" aria-label="Study day"><option value="">All days</option></select>
+        </div>
+        <select id="f-topic" aria-label="Topic"><option value="">All topics</option></select>
+        <div class="progress"><span id="solved-count">0 / 0 solved</span><div class="track"><i id="solved-fill"></i></div></div>
+      </div>
+      <ul id="plist" class="plist"></ul>
+    </aside>
+
+    <section class="work">
+      <button id="toggle-side" class="subtle mobile-only">☰ Problem list</button>
+      <div class="prob-head">
+        <div>
+          <p class="eyebrow" id="p-meta"></p>
+          <h1 id="p-title">Pick a problem</h1>
+        </div>
+        <span id="p-solved" class="solved" hidden>✓ Solved</span>
+      </div>
+      <div id="p-statement" class="statement"></div>
+
+      <div class="editor-wrap">
+        <div class="editor-bar">
+          <span>solution.py</span>
+          <span class="hint">Tab = indent · ⌘/Ctrl+Enter = run tests</span>
+        </div>
+        <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Python code editor"></textarea>
+      </div>
+      <div class="actions">
+        <button id="run-tests" class="primary">▶ Run tests</button>
+        <button id="run-code" class="subtle">Run code (print output)</button>
+        <button id="reset" class="subtle">↺ Reset</button>
+        <button id="show-sol" class="subtle">💡 Reference solution</button>
+      </div>
+      <pre id="sol" class="sol" hidden></pre>
+      <div id="results" class="results" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <main id="terminal-view" class="terminal-view" hidden>
+    <div class="term-head">
+      <div>
+        <h1>Python terminal</h1>
+        <p class="quiet">A real Python (Pyodide) running in your browser — nothing is sent anywhere. State persists between commands. Handy: <code>TreeNode</code>, <code>build_tree([...])</code>, <code>import heapq, collections, math, bisect</code>.</p>
+      </div>
+      <button id="term-clear" class="subtle">Clear</button>
+    </div>
+    <pre id="term-log" class="term-log" aria-live="polite"></pre>
+    <div class="term-input">
+      <span>&gt;&gt;&gt;</span>
+      <textarea id="term-in" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Type Python. Enter runs a one-liner · ⌘/Ctrl+Enter runs multi-line code"></textarea>
+      <button id="term-run" class="primary">Run</button>
+    </div>
+  </main>
+</body>
+</html>

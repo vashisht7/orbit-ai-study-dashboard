@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Visual Map · AI Engineering at a glance</title>
+  <link rel="stylesheet" href="vmap.css">
+  <script src="plan-data.js"></script>
+  <script src="problems-data.js"></script>
+  <script defer src="vmap.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <a class="back" href="index.html">← Dashboard</a>
+    <b>🗺️ Visual Map</b>
+    <nav class="jump">
+      <a href="#journey">Journey</a><a href="#concepts">Concepts</a><a href="#diagrams">Diagrams</a><a href="#quant">Quantization</a><a href="#coding">Coding map</a><a href="#site">Site map</a>
+    </nav>
+    <a class="back" href="practice.html">⌨️ Code Lab</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">THE WHOLE COURSE ON ONE PAGE</p>
+      <h1>See how everything connects.</h1>
+      <p class="lead">Tap any box for a plain-English explanation. Tap a day chip to jump straight into that lesson.</p>
+    </section>
+
+    <section id="journey">
+      <h2>1 · Your 30-day journey</h2>
+      <p class="sub">Five stages. Each dot is a day: <b>coding pattern</b> + AI concept + local-AI / resume drill.</p>
+      <div id="journey-grid"></div>
+    </section>
+
+    <section id="concepts">
+      <h2>2 · The AI-engineer concept map</h2>
+      <p class="sub">Read left → right, top → bottom: each layer builds on the one before it.</p>
+      <div id="concept-map" class="cmap"></div>
+    </section>
+
+    <section id="diagrams">
+      <h2>3 · Pipelines, drawn out</h2>
+      <p class="sub">Click a step to see what happens there and what interviewers ask about it.</p>
+      <div class="dgrid" id="dgrid"></div>
+    </section>
+
+    <section id="quant">
+      <h2>4 · Quantization &amp; memory bandwidth — the chart</h2>
+      <p class="sub">Model size = params × bits ÷ 8. At batch size 1, speed ≈ bandwidth ÷ size. Change the device and watch what fits.</p>
+      <div class="qctl"><label>Device memory bandwidth
+        <select id="bw">
+          <option value="50" data-ram="8">iPhone (A17/A18 Pro) · 50 GB/s · 8 GB RAM</option>
+          <option value="150" data-ram="36">MacBook M3 Pro · 150 GB/s · 36 GB RAM</option>
+          <option value="400" data-ram="64">Mac M3 Max · 400 GB/s · 64 GB RAM</option>
+          <option value="2000" data-ram="80">Cloud A100 80 GB · 2000 GB/s</option>
+          <option value="3350" data-ram="80">Cloud H100 80 GB · 3350 GB/s</option>
+        </select></label></div>
+      <div id="qchart"></div>
+      <p class="legend"><i class="fit"></i> fits in memory <i class="nofit"></i> does not fit <span id="qnote"></span></p>
+    </section>
+
+    <section id="coding">
+      <h2>5 · Coding patterns → problems</h2>
+      <p class="sub">Every problem opens in the Code Lab with a Python editor and test cases.</p>
+      <div id="coding-map" class="pgrid"></div>
+    </section>
+
+    <section id="site">
+      <h2>6 · Site map</h2>
+      <div class="pgrid" id="site-map"></div>
+    </section>
+  </main>
+</body>
+</html>

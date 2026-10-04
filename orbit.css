@@ -2257,3 +2257,10 @@ footer span {
 }
 
 
+
+/* Code Lab / Visual Map shortcuts */
+.nav-pill{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:99px;border:1px solid rgba(129,140,248,.4);background:rgba(129,140,248,.12);color:#e0e7ff;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap;transition:all .2s ease}
+.nav-pill:hover{background:rgba(129,140,248,.26);border-color:#818cf8}
+@media (max-width:760px){.nav-pill span{display:none}.nav-pill{padding:6px 9px}}
+.codelab-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#34d399;text-decoration:none}
+.codelab-link:hover{text-decoration:underline}
