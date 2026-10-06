@@ -46,14 +46,14 @@
     ['Core model mechanics', 'Covered in depth', 2, 12, 'Vectors, losses, training, attention, transformers, and decoding.'],
     ['RAG and retrieval', 'Covered', 14, 16, 'Embeddings, chunking, fusion, source evidence, and graph trade-offs.'],
     ['Agents and safety', 'Covered', 17, 20, 'Tool boundaries, retries, state, prompt injection, and interfaces.'],
-    ['Evaluation and statistics', 'Covered; extend experiments', 21, 21, 'Add deeper calibration and controlled A/B practice using the bridge notes.'],
-    ['Serving and operations', 'Covered; extend distributed systems', 22, 23, 'Add hands-on load tests, rollout practice, and distributed training.'],
+    ['Evaluation and statistics', 'Personalized deep dives added', 21, 21, 'Calibration, selective error, grouped splits, uncertainty, agent judges, and evidence cards.'],
+    ['Serving and operations', 'Personalized deep dives added', 22, 23, 'Memory budgets, routing, sharding, Spark lineage, rollout, and recovery. Hands-on infrastructure practice still matters.'],
     ['Fine-tuning and alignment', 'Covered', 24, 25, 'Adapter mechanics, preference signals, and deployment evaluation.'],
-    ['Multimodal and on-device', 'Introduced', 26, 26, 'Good application overview; specialized vision/audio roles need more modeling depth.'],
-    ['Classical ML, SQL, and Spark', 'Needs a focused second pass', 27, 27, 'Use bridge notes and Code Lab, then practice real datasets, SQL, and Spark jobs.'],
+    ['Multimodal and on-device', 'Personalized deep dives added', 26, 26, 'OCR field/document quality, voice error boundaries, SQLite recovery, and mobile design. Specialist research needs further practice.'],
+    ['Classical ML, SQL, and Spark', 'Focused second pass added', 27, 27, 'Model baselines, classifier/ranker design, TF-IDF/PageRank, shuffles, temporal joins, and streaming correctness.'],
     ['Project and interview readiness', 'Covered as practice', 27, 30, 'Demonstrate tested behavior and measured results; no automatic readiness guarantee.']
   ];
-  $('#coverage-grid').innerHTML = coverage.map(([title,status,a,b,note]) => `<article class="pcard"><h4>${esc(title)}</h4><b>${esc(status)}</b><p>${esc(note)}</p>${dl(a,b)}</article>`).join('');
+  $('#coverage-grid').innerHTML = coverage.map(([title,status,a,b,note]) => `<article class="pcard"><h4>${esc(title)}</h4><b>${esc(status)}</b><p>${esc(note)}</p>${dl(a,b)}<p><a href="ai-depth/index.html?day=${a}">Open related AI deep dives →</a></p></article>`).join('');
 
   /* 3 · pipelines */
   const D = [

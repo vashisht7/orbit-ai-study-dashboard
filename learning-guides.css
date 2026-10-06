@@ -9,4 +9,5 @@
 .learn-guide .learn-detail{padding:14px;background:#0c1b2a;border-left:3px solid #82dfcf;min-height:72px;border-radius:6px}
 .learn-guide summary{cursor:pointer;color:#b6e9e0;font-weight:600}.learn-guide a{color:#8fe4d5}.learn-guide .learn-practice{display:inline-block;margin-top:14px;font-size:13px}
 .learn-guide button:focus-visible,.learn-guide summary:focus-visible,.learn-guide a:focus-visible{outline:3px solid #f9cf80;outline-offset:3px}
+.learn-guide .learn-depth{border-top:1px solid #36536a;margin-top:20px;padding-top:12px;font-size:14px}.learn-depth ul{padding-left:20px}.learn-depth li{margin:7px 0}
 @media(max-width:650px){.learn-guide .learn-flow{grid-template-columns:1fr;gap:22px}.learn-flow li:not(:last-child)::after{content:'↓';right:50%;top:auto;bottom:-22px}.learn-flow button{min-height:58px;flex-direction:row;align-items:center}.learn-guide{padding:15px}}

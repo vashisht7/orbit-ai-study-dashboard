@@ -5,6 +5,7 @@
     const g = window.LESSON_GUIDES[Number(day)-1];
     if (!g) return '';
     const href = window.HELLO_PROBLEMS?.[g.problem] || `${prefix}practice.html#${g.problem}`;
+    const deep = (window.AI_DEPTH_LINKS || []).filter(c => c.days.includes(Number(day)));
     return `<section class="learn-guide" aria-label="Simple explanation and topic diagram">
       <p class="learn-kicker">START HERE · THE TWO-MINUTE VERSION</p><h2>${esc(g.title)}</h2><p>${esc(g.summary)}</p>
       <p class="learn-help">Follow the arrows. Select a step to understand what happens.</p>
@@ -13,6 +14,7 @@
       <p><b>Small example:</b> ${esc(g.example)}</p>
       <details><summary>Check your understanding</summary><p>${esc(g.check)}</p><p>Explain the diagram without looking, then use the full lesson to check your answer.</p></details>
       <a class="learn-practice" href="${esc(href)}" ${href.startsWith('https:') ? 'target="_blank" rel="noopener noreferrer"' : ''}>Practice the related concept · ${href.startsWith('https:') ? 'Hello Interview ↗' : 'Code Lab →'}</a>
+      ${deep.length ? `<div class="learn-depth"><p><b>Go deeper for your AI interviews</b> · Work the mechanism, diagnose a failure, and connect it to your résumé.</p><ul>${deep.slice(0,3).map(c => `<li><a href="${prefix}ai-depth/index.html#${c.id}">${esc(c.title)}</a></li>`).join('')}</ul><a href="${prefix}ai-depth/index.html?day=${Number(day)}">See all ${deep.length} deep dives for Day ${Number(day)} →</a></div>` : ''}
       <span hidden data-guide-day="${g.day}"></span>
     </section>`;
   };

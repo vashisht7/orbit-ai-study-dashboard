@@ -2264,3 +2264,5 @@ footer span {
 @media (max-width:760px){.nav-pill span{display:none}.nav-pill{padding:6px 9px}}
 .codelab-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#34d399;text-decoration:none}
 .codelab-link:hover{text-decoration:underline}
+/* Keep study destinations accessible when the player bar fills a narrow screen. */
+@media (max-width:1200px){.topbar{height:auto;flex-wrap:wrap;gap:10px;padding:10px 18px}.topright{flex-basis:100%;justify-content:center;flex-wrap:wrap;gap:10px}.gamify-bar{margin-left:auto}}

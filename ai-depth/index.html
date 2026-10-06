@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Vashisht's personalized AI engineering interview deep dives: mechanisms, worked examples, diagrams, system designs, and project evidence.">
+  <title>AI Deep Dives · Orbit</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="../reader/vendor/marked.js"></script>
+  <script src="content.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#content">Skip to reading</a>
+  <header>
+    <a class="brand" href="#overview">◈ ORBIT <span>AI DEEP DIVES</span></a>
+    <nav aria-label="Main navigation"><a href="../index.html">Daily path</a><a href="../practice.html">Code Lab</a><a href="../visual-map.html">Visual map</a><button id="menu" aria-expanded="false" aria-controls="library">Topics</button></nav>
+  </header>
+  <div class="layout">
+    <aside id="library" aria-label="Topic library">
+      <a class="overview-link" href="#overview">← Coverage & study guide</a>
+      <label for="search">Find a concept</label>
+      <input id="search" type="search" placeholder="QLoRA, MPNet, OCR, retries…">
+      <label for="project">Connect to your work</label>
+      <select id="project"><option value="">All projects</option></select>
+      <label for="track">Study area</label>
+      <select id="track"><option value="">All areas</option></select>
+      <label for="day">Connect to your daily path</label>
+      <select id="day"><option value="">All days</option></select>
+      <p id="progress" aria-live="polite"></p>
+      <nav id="chapters" aria-label="Deep-dive chapters"></nav>
+      <p class="muted">Notes and self-ratings stay in this browser. Export them to keep a copy or move devices.</p>
+      <button id="export">Export my notes</button>
+      <label class="file-label" for="import">Import saved notes</label><input id="import" type="file" accept="application/json,.json">
+      <p id="save-status" role="status"></p>
+    </aside>
+    <main id="content" tabindex="-1"><article id="lesson"></article></main>
+  </div>
+  <noscript>Enable JavaScript for the interactive reader. <a href="content.md">Read the complete Markdown edition</a>.</noscript>
+</body>
+</html>
