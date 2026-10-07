@@ -14,7 +14,7 @@
       <p><b>Small example:</b> ${esc(g.example)}</p>
       <details><summary>Check your understanding</summary><p>${esc(g.check)}</p><p>Explain the diagram without looking, then use the full lesson to check your answer.</p></details>
       <a class="learn-practice" href="${esc(href)}" ${href.startsWith('https:') ? 'target="_blank" rel="noopener noreferrer"' : ''}>Practice the related concept · ${href.startsWith('https:') ? 'Hello Interview ↗' : 'Code Lab →'}</a>
-      ${deep.length ? `<div class="learn-depth"><p><b>Go deeper for your AI interviews</b> · Work the mechanism, diagnose a failure, and connect it to your résumé.</p><ul>${deep.slice(0,3).map(c => `<li><a href="${prefix}ai-depth/index.html#${c.id}">${esc(c.title)}</a></li>`).join('')}</ul><a href="${prefix}ai-depth/index.html?day=${Number(day)}">See all ${deep.length} deep dives for Day ${Number(day)} →</a></div>` : ''}
+      ${deep.length ? `<div class="learn-depth"><p><b>Learn this day step by step.</b> One idea, one example, then explain it yourself.</p><a class="learn-practice" href="${prefix}ai-depth/index.html#day-${Number(day)}">Open Day ${Number(day)} in Daily AI →</a></div>` : ''}
       <span hidden data-guide-day="${g.day}"></span>
     </section>`;
   };

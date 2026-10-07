@@ -52,11 +52,11 @@
     const tracks = [...new Set(chapters.map(c => c.track))];
     const sources = new Set(chapters.flatMap(c => c.sources.map(s => s.url))).size;
     $('#lesson').innerHTML = `<p class="kicker">YOUR AI ENGINEERING FIELD GUIDE · REVIEWED OCTOBER 6, 2026</p>
-      <h1>Understand it.<br>Build it. Defend it.</h1>
-      <p class="lead">Deep dives built around NoteEchoes, MFlash, your enterprise AI work, and your backend experience. Follow a concept from a simple explanation to a numerical example, a failure, and an interview answer.</p>
+      <h1>Your AI reference library.</h1>
+      <p class="lead">Use these longer lessons when you want more detail about a topic. For everyday learning, follow one lesson at a time in Daily AI.</p>
       <div class="stat-row"><div class="stat"><b>${chapters.length}</b><span>personalized chapters</span></div><div class="stat"><b>27</b><span>tested Python examples</span></div><div class="stat"><b>${sources}</b><span>primary references</span></div><div class="stat"><b>4</b><span>system-design rehearsals</span></div></div>
-      <div class="notice"><b>How this fits your dashboard:</b> Keep the 30-lesson daily path for foundations. Each daily lesson now links to its relevant deep dives. The 62-chapter reference remains available for further derivations. Reading coverage and interview readiness are different; use the self-checks and evidence notes below.</div>
-      <div class="actions"><a class="button" href="#ml-decisions">Start the deep-dive path →</a><a href="#interview-evidence">Review your résumé evidence checklist</a><a href="../reader/index.html">Open the detailed reference</a></div>
+      <div class="notice"><b>You do not need to choose another course.</b> Daily AI brings the foundation, example, and interview material together in the same 30-day order as your dashboard. This library keeps the complete explanations available for review.</div>
+      <div class="actions"><a class="button" href="#overview">Back to my daily lesson →</a><a href="#interview-evidence">Review your résumé evidence checklist</a><a href="../reader/index.html">Open the detailed reference</a></div>
       ${$('#day').value ? `<section class="audit"><h2>Your Day ${Number($('#day').value)} deep dives</h2><ul>${chapters.filter(c => c.days.includes(Number($('#day').value))).map(c => `<li>${link(c.id)}</li>`).join('')}</ul><p>Use the day filter in Topics to return to all chapters.</p></section>` : ''}
       <h2>What needed more depth</h2>
       <div class="table-wrap"><table><thead><tr><th>Area</th><th>Existing foundation</th><th>Added interview depth</th></tr></thead><tbody>
@@ -68,7 +68,7 @@
       <tr><td>Résumé defense</td><td>Daily interview prompts</td><td>Four worked system designs, failure scenarios, and evidence cards</td></tr>
       <tr><td>Specialist roles</td><td>Selected introductions</td><td>Speech, recommendation, vision, diffusion, time-series, and GNN orientation; specialized roles still need dedicated implementation and research practice</td></tr>
       </tbody></table></div>
-      <h2>Your study route</h2><p>Read the foundation first. Then explain the flow diagram, predict the example, answer the hidden interview questions, and record one real piece of evidence. Spend more than one session when needed.</p>
+      <h2>Reference areas</h2><p>Browse by subject when you want to revisit a concept. Your daily lesson already selects a relevant topic for you.</p>
       <ol class="roadmap">${tracks.map(t => { const items = chapters.filter(c => c.track === t); return `<li><a href="#${items[0].id}">${esc(t)}</a><small>${items.length} chapters · ${items.map(c => c.number).join(', ')}</small></li>`; }).join('')}</ol>
       <h2>Choose a topic</h2><div class="cards">${chapters.map(c => `<section class="card"><p class="kicker">${esc(c.track)} · ${c.number}</p><a href="#${c.id}">${esc(c.title)}</a><p>${esc(c.projects.join(' · '))}</p><p>${c.minutes} min reading + practice · Days ${c.days.join(', ')}</p></section>`).join('')}</div>
       <div class="audit"><h2>Scope, sources, and your résumé</h2><p>This is original teaching material researched on October 6, 2026. References distinguish published research, vendor guidance, and living implementation documentation. It is a dated snapshot; API details and checkpoint capabilities should be checked again when implementing.</p><p>All numerical examples are synthetic teaching cases unless explicitly identified otherwise. Project connections come from your résumé and the existing dashboard; the proposed designs are not claims about your shipped implementations. No résumé metrics have been invented or changed.</p><p>The original downloadable PDFs contain their earlier editions. This new material is available here and in the <a href="content.md">complete Markdown edition</a>; use “Print / save PDF” inside a chapter for an offline copy.</p></div>`;
@@ -87,7 +87,7 @@
     const index = chapters.indexOf(c);
     $('#lesson').innerHTML = `<p class="kicker">${esc(c.track)} · CHAPTER ${c.number} / ${chapters.length}</p><h1>${esc(c.title)}</h1>
       <div>${c.projects.map(p => `<span class="chip">${esc(p)}</span>`).join('')}<span class="chip">${c.minutes} min reading + practice</span></div>
-      <div class="actions"><a href="../beginner/index.html#lesson-${String(c.foundation).padStart(2,'0')}">Review the foundation · Day ${c.foundation}</a><a href="../practice.html#${c.practice}">Related Code Lab →</a><button id="print">Print / save PDF</button>${/```python/.test(c.body) ? '<button id="code-download">Download Python example</button>' : ''}</div>
+      <div class="actions"><a href="#day-${c.foundation}">Learn this step by step · Day ${c.foundation}</a><a href="../practice.html#${c.practice}">Related Code Lab →</a><button id="print">Print / save PDF</button>${/```python/.test(c.body) ? '<button id="code-download">Download Python example</button>' : ''}</div>
       <p class="muted">Prerequisites: ${c.prereq.length ? c.prereq.map(link).join(' · ') : 'Start here; use the foundation link if a term is unfamiliar.'}</p>
       <section class="diagram" aria-label="Interactive concept diagram"><h2>Follow the mechanism</h2><p>Select a step. Explain what crosses each arrow before moving on.</p><ol class="flow">${c.flow.map(([label],i) => `<li><button data-step="${i}" aria-pressed="${i===0}"><b>0${i+1}</b>${esc(label)}</button></li>`).join('')}</ol><div class="flow-detail" aria-live="polite">${esc(c.flow[0][1])}</div></section>
       ${c.sim ? '<section class="simulator" id="simulator" aria-label="Interactive worked example"></section>' : ''}
@@ -165,9 +165,14 @@
   }
   function show() {
     const id = location.hash.slice(1); current = byId.get(id) || null;
-    document.title = `${current?.title || 'AI Deep Dives'} · Orbit`;
-    current ? showChapter(current) : overview();
-    if (id && id !== 'overview' && !current) {
+    const dayMatch = /^day-(\d+)$/.exec(id);
+    const validDay = dayMatch && Number(dayMatch[1]) >= 1 && Number(dayMatch[1]) <= 30;
+    const daily = !id || id === 'overview' || validDay;
+    document.body.classList.toggle('daily-view', Boolean(daily));
+    document.title = `${current?.title || 'Daily AI'} · Orbit`;
+    if(daily) DAILY_STUDY.render(validDay ? Number(dayMatch[1]) : !id && Number.isInteger(requestedDay) && requestedDay >= 1 && requestedDay <= 30 ? requestedDay : DAILY_STUDY.next());
+    else current ? showChapter(current) : overview();
+    if (id && !['overview','library'].includes(id) && !current && !validDay) {
       const p = document.createElement('p'); p.className = 'notice'; p.textContent = 'That topic was not found. Choose a chapter below.'; $('#lesson').prepend(p);
     }
     document.querySelectorAll('#lesson table').forEach(t => {
@@ -178,18 +183,19 @@
   }
   $('#search').oninput = library; $('#project').onchange = library; $('#track').onchange = library;
   $('.skip').onclick = e => { e.preventDefault(); $('#content').focus(); $('#content').scrollIntoView(); };
-  $('#day').onchange = () => { library(); if (!current) overview(); };
+  $('#day').onchange = () => { library(); if (location.hash === '#library') overview(); };
   $('#menu').onclick = () => $('#menu').setAttribute('aria-expanded', String($('#library').classList.toggle('open')));
-  $('#export').onclick = () => download('orbit-ai-evidence.json', JSON.stringify({version:1, exported:new Date().toISOString(), notes:state},null,2), 'application/json');
+  $('#export').onclick = () => download('orbit-ai-evidence.json', JSON.stringify({version:1, exported:new Date().toISOString(), notes:state, daily:DAILY_STUDY.export()},null,2), 'application/json');
   $('#import').onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
     try {
       if (file.size > 2_000_000) throw Error('File is too large. Choose an exported notes file under 2 MB.');
       const data = JSON.parse(await file.text());
       if (data.version !== 1) throw Error('This is not a supported Orbit notes export.');
-      state = {...state, ...validState(data.notes)}; save(); show(); $('#save-status').textContent = 'Notes imported; matching topics replaced by your saved copy.';
+      state = {...state, ...validState(data.notes)}; if(data.daily) DAILY_STUDY.import(data.daily); save(); show(); $('#save-status').textContent = 'Notes imported; matching topics replaced by your saved copy.';
     } catch (err) { $('#save-status').textContent = `Import failed: ${err.message}`; }
     e.target.value = '';
   };
   window.addEventListener('hashchange', show); show();
+  document.addEventListener('click', e => { if(e.target.closest('a[href="#overview"]') && location.hash === '#overview') { e.preventDefault(); show(); } });
 })();

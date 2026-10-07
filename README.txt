@@ -44,3 +44,11 @@ chapter print button or ai-depth/content.md for the new offline material.
 Edit ai-depth/content.md and ai-depth/sources.json, then run
 python3 tools/build_ai_depth.py and python3 tools/check_ai_depth.py.
 Sources were reviewed October 6, 2026; living APIs need rechecking when used.
+
+Daily AI simplification (October 6, 2026): ai-depth/index.html now starts a
+guided 30-day route matching the dashboard. Each day has Learn, Example, and
+Explain steps, a short recall answer, notes, and an explicit practiced toggle.
+Full foundation and interview lessons remain expandable in the day itself;
+existing chapter URLs and the reference library remain available. Daily progress
+uses orbit-ai-daily-v1 without overwriting dashboard or reference progress.
+Notes export/import includes both the older reference notes and daily progress.
