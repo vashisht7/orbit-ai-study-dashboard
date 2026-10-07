@@ -3,6 +3,8 @@ window.DAILY_STUDY = (() => {
   const KEY='orbit-ai-progress-v1', CHECKPOINT='days-1-5-except-design-2026-10-06';
   const {topicIds,answers}=DAILY_LESSON_CONTENT;
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const progressTasks=[['reading','AI reading'],['coding','Coding'],['design','System design'],['lab','Hands-on lab'],['recall','Interview recall'],['localai','Everyday local AI']];
+  const progressCount=d=>progressTasks.filter(([key])=>day(d).checks[key]===true).length;
   const stages=[{id:'learn',name:'AI lesson',keys:['reading','lab','localai'],time:'25 min'}, {id:'coding',name:'Coding',keys:['coding'],time:'35 min'}, {id:'design',name:'System design',keys:['design'],time:'25 min'}, {id:'explain',name:'Explain it',keys:['recall'],time:'10 min'}];
   let state={days:{},last:1}, timer=null, playing=false, voice=false, slide=0, slides=[];
   const design=[
@@ -68,8 +70,14 @@ window.DAILY_STUDY = (() => {
     document.title=`Day ${d} · ${stages[stage].name} · Orbit Study`;
     document.querySelector('#lesson').innerHTML=`<div class="study-top"><span>YOUR ONE STUDY PLAN</span><a href="#day-6">Go to Day 6 →</a></div>
     <h1>Day ${d}: ${esc(g.title)}</h1><p class="lead">Follow these four steps. The AI explanation, coding, design, and your project story are all here.</p>
-    <div class="checkpoint"><b>Saved checkpoint: Days 1–5 complete except system design.</b><p>${backlog.length?`${backlog.length} design sessions still pending. Catch up one at a time below, or continue Day 6.`:'Your first five design sessions are now marked complete.'}</p>${backlog.length?`<div class="catchup">${backlog.map(n=>`<button data-catchup="${n}">Day ${n} · ${esc(DAYS[n-1].label)}</button>`).join('')}</div>`:''}</div>
-    <details class="day-picker"><summary>Choose a day · ${count}/4 steps complete today</summary><div class="day-grid">${LESSON_GUIDES.map(a=>`<a href="#day-${a.day}" ${a.day===d?'aria-current="page"':''}><b>${complete(a.day)?'✓ ':''}Day ${a.day}</b><span>${esc(a.title)}</span><small>${stages.filter((_,i)=>done(a.day,i)).length}/4 steps</small></a>`).join('')}</div></details>
+    <section class="visible-progress" aria-label="Your daily progress">
+    <h2>Your days</h2><nav class="numbered-days" aria-label="Choose a study day">${LESSON_GUIDES.map(a=>`<a href="#day-${a.day}" ${a.day===d?'aria-current="page"':''} aria-label="Day ${a.day}, ${progressCount(a.day)} of 6 complete"><b>${a.day}</b><small>${progressCount(a.day)}/6</small><span class="day-fill"><i style="width:${progressCount(a.day)/6*100}%"></i></span></a>`).join('')}</nav>
+    <h3>Day ${d} progress · <span id="visible-progress-count">${progressCount(d)}/6</span> complete</h3>
+    <p class="muted">Tick each activity yourself. These are your original six progress checkboxes.</p>
+    <div class="progress-checklist">${progressTasks.map(([key,label])=>`<label><input type="checkbox" data-progress-key="${key}" ${x.checks[key]===true?'checked':''}><span>${label}</span></label>`).join('')}</div>
+    <details class="original-notes" ${x.notes?'open':''}><summary>Your saved Day ${d} notes</summary><textarea id="original-day-note" aria-label="Original notes for Day ${d}" maxlength="30000"></textarea></details>
+    <p id="progress-save-status" class="muted" role="status">Saved on this browser. Opening a day does not mark anything complete.</p>
+    </section>
     <nav class="study-steps" aria-label="Daily study order">${stages.map((s,i)=>`<a href="#day-${d}/${s.id}" data-study-step="${i}" aria-pressed="${i===stage}" ${i===stage?'aria-current="step"':''}><span>${done(d,i)?'✓':i+1}</span><b>${s.name}</b><small>${s.time}</small></a>`).join('')}</nav>
     <p class="study-instruction">${stage===2&&d<=5&&!done(d,2)?'This is the unfinished part of this day. You do not need to redo the other steps.':`Step ${stage+1} of 4 · ${done(d,stage)?'Already marked complete. You can review it.':'Do this step, then continue. Times are suggestions, not deadlines.'}`}</p>
     <section class="study-stage">
@@ -83,6 +91,13 @@ window.DAILY_STUDY = (() => {
     <details class="extra-reference"><summary>Optional extra explanation — not another assignment</summary><p>Use this only if you want more depth. Your required work is the four-step checklist above.</p><div class="prose">${md(chapter.body)}</div><details><summary>Sources and original interactive reference</summary><ul>${chapter.sources.map(s=>`<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a></li>`).join('')}</ul><a href="#${chapter.id}">Open the reference calculators and diagrams</a></details></details>
     <footer class="study-backup"><p>One progress record for AI, coding, design, and interview practice. Your reported Days 1–5 checkpoint is included in this published edition. Later updates are saved on this browser; use a backup to move them to another device.</p><button id="study-export">Export all progress</button><label for="study-import">Restore a backup<input id="study-import" type="file" accept=".json,application/json"></label><p id="study-backup-status" role="status"></p></footer>`;
     function rerender(){persist();render(d);document.querySelector('.study-steps').scrollIntoView({block:'start'});}
+    document.querySelector('#original-day-note').value=x.notes||'';
+    document.querySelector('#original-day-note').oninput=e=>{x.notes=e.target.value;document.querySelector('#progress-save-status').textContent=persist();};
+    document.querySelectorAll('[data-progress-key]').forEach(input=>input.onchange=()=>{
+      const key=input.dataset.progressKey;x.checks[key]=input.checked;persist();render(d);
+      document.querySelector('[data-progress-key="'+key+'"]').focus({preventScroll:true});
+      document.querySelector('#progress-save-status').textContent='Day '+d+' progress saved.';
+    });
     document.querySelectorAll('[data-study-step]').forEach(b=>b.onclick=()=>{x.unifiedStage=+b.dataset.studyStep;persist();});
     document.querySelectorAll('[data-catchup]').forEach(b=>b.onclick=()=>{const n=+b.dataset.catchup;day(n).unifiedStage=2;persist();location.hash=`day-${n}/design`;});
     document.querySelector('#study-note').value=x.unifiedNotes[stages[stage].id]||'';
