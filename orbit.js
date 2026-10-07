@@ -25,6 +25,7 @@ let audioCtx = null;
 try {
   const s = JSON.parse(localStorage.getItem(KEY));
   if (s && s.days) {
+    state = { ...state, ...s };
     state.days = s.days;
     state.last = s.last || 1;
     if (s.streak) state.streak = s.streak;
@@ -33,6 +34,13 @@ try {
   }
 } catch (e) {
   console.warn('Orbit: local storage load error', e);
+}
+
+// Only a browser with no daily record receives the checkpoint the user reported.
+// Existing checkmarks, notes, quiz results, and later-day progress remain authoritative.
+if (Object.keys(state.days).length === 0) {
+  for (let d=1;d<=5;d++) state.days[d]={checks:{reading:true,coding:true,design:false,lab:true,recall:true,localai:true},notes:'',quizDone:false};
+  state.last=5;
 }
 
 function dayState(n = selected) {
@@ -313,7 +321,7 @@ function updateDailyStreak() {
 // =====================================================================
 const ACHIEVEMENTS = [
   { id: 'first_step', title: 'First Token', icon: '⚡', desc: 'Complete Level 01 reading and comprehension.' },
-  { id: 'first_level', title: 'Level Clear', icon: '🌟', desc: 'Score 5/5 completed tasks on any level.' },
+  { id: 'first_level', title: 'Level Clear', icon: '🌟', desc: 'Complete all six activities on a level.' },
   { id: 'streak_3', title: 'On Fire', icon: '🔥', desc: 'Maintain an active 3-day study streak.' },
   { id: 'streak_7', title: 'Unstoppable Momentum', icon: '🚀', desc: 'Reach a 7-day study streak.' },
   { id: 'stage_1', title: 'Foundations Forged', icon: '🧱', desc: 'Complete all 7 levels in Stage 1.' },
@@ -327,7 +335,7 @@ const ACHIEVEMENTS = [
 ];
 
 function checkAchievements() {
-  const completedDays = DAYS.filter(d => count(d.day) === 5).length;
+  const completedDays = DAYS.filter(d => count(d.day) === taskKeys.length).length;
   const labCount = DAYS.filter(d => dayState(d.day).checks.lab).length;
   const notesCount = DAYS.filter(d => (dayState(d.day).notes || '').trim().length >= 20).length;
   const streak = state.streak.count || 1;
@@ -337,11 +345,11 @@ function checkAchievements() {
     first_level: completedDays >= 1,
     streak_3: streak >= 3,
     streak_7: streak >= 7,
-    stage_1: [1, 2, 3, 4, 5, 6, 7].every(d => count(d) === 5),
-    attention_pioneer: count(9) === 5,
+    stage_1: [1, 2, 3, 4, 5, 6, 7].every(d => count(d) === taskKeys.length),
+    attention_pioneer: count(9) === taskKeys.length,
     lab_specialist: labCount >= 5,
-    rag_expert: count(15) === 5,
-    safety_sentinel: count(19) === 5,
+    rag_expert: count(15) === taskKeys.length,
+    safety_sentinel: count(19) === taskKeys.length,
     scholar: notesCount >= 10,
     halfway: completedDays >= 15,
     grandmaster: completedDays >= 30
@@ -684,7 +692,7 @@ function noteLensCard() {
 // PROGRESS, STATS & UI REFRESH
 // =====================================================================
 function refreshProgress() {
-  const completeLevels = DAYS.filter(d => count(d.day) === 5).length;
+  const completeLevels = DAYS.filter(d => count(d.day) === taskKeys.length).length;
   const totalTasks = DAYS.reduce((s, d) => s + count(d.day), 0);
   const totalXP = calculateTotalXP();
   const playerRank = getPlayerRank(totalXP);
@@ -719,9 +727,9 @@ function refreshProgress() {
   $$('.level').forEach(el => {
     const n = +el.dataset.day;
     const c = count(n);
-    el.classList.toggle('done', c >= 5);
-    el.querySelector('.node').textContent = c >= 5 ? '✓' : String(n).padStart(2, '0');
-    el.querySelector('.level-count').textContent = c >= 5 ? 'Complete' : `${c} / 6`;
+    el.classList.toggle('done', c >= taskKeys.length);
+    el.querySelector('.node').textContent = c >= taskKeys.length ? '✓' : String(n).padStart(2, '0');
+    el.querySelector('.level-count').textContent = c >= taskKeys.length ? 'Complete' : `${c} / 6`;
 
     // Star rating
     const starsEl = el.querySelector('.level-stars');
@@ -801,7 +809,7 @@ function buildMap() {
     else if (c >= 4) stars = 2;
     else if (c >= 2) stars = 1;
 
-    const isDone = c >= 5;
+    const isDone = c >= taskKeys.length;
     return `
       <button class="level ${d.day === selected ? 'active' : ''} ${isDone ? 'done' : ''}" data-day="${d.day}" ${d.day === selected ? 'aria-current="step"' : ''}>
         <span class="node">${isDone ? '✓' : String(d.day).padStart(2, '0')}</span>
@@ -1395,31 +1403,6 @@ function show() {
   // Everyday Local AI Spotlight Card & Resume Defense Drill Card
   const spotlightEl = $('#spotlight-card');
   if (spotlightEl) {
-    const rd = d.resume_defense;
-    const projectClass = rd && rd.project.includes('NoteEchoes') ? 'badge-noteechoes' : (rd && rd.project.includes('Bank') ? 'badge-bofa' : 'badge-edge');
-    const rdHtml = rd ? `
-      <div class="resume-defense-card">
-        <div class="defense-top">
-          <span class="defense-badge ${projectClass}">${esc(rd.project)}</span>
-          <span class="defense-tag">🎯 RESUME DEFENSE DRILL</span>
-          <span class="xp-chip">+80 XP</span>
-        </div>
-        <div class="defense-question">
-          <strong>Q: ${esc(rd.q)}</strong>
-        </div>
-        <details class="defense-details">
-          <summary class="defense-summary">
-            <span>Reveal Technical Talking Points</span>
-            <span class="defense-arrow">▾</span>
-          </summary>
-          <p class="quiet">Study prompts, not verified project evidence. Before using a number or implementation detail in an interview, check your actual configuration and evaluation report. State your own measured contribution.</p>
-          <ul class="defense-points">
-            ${rd.points.map(pt => `<li>${esc(pt)}</li>`).join('')}
-          </ul>
-        </details>
-      </div>
-    ` : '';
-
     spotlightEl.innerHTML = `
       <div class="local-ai-spotlight">
         <div class="spotlight-top">
@@ -1429,7 +1412,7 @@ function show() {
         <p class="spotlight-text">${esc(d.local_ai || 'Master today\'s on-device mechanism, Apple Silicon memory constraints, and architecture.')}</p>
         <button class="spotlight-btn" id="spotlight-open-sim">Inspect in NoteEchoes Lab ⚡</button>
       </div>
-      ${rdHtml}
+
     `;
     const openSimBtn = $('#spotlight-open-sim');
     if (openSimBtn) {
@@ -1500,6 +1483,12 @@ function show() {
 
   $('#evidence').textContent = d.evidence;
   $('#notes').value = dayState().notes || '';
+  let savedStepNotes = $('#saved-step-notes');
+  if(!savedStepNotes){savedStepNotes=document.createElement('details');savedStepNotes.id='saved-step-notes';$('#notes').after(savedStepNotes);}
+  const keptNotes=Object.entries(dayState().unifiedNotes||{}).filter(([,note])=>typeof note==='string'&&note.trim());
+  const noteLabels={learn:'AI lesson',coding:'Coding',design:'System design',explain:'Interview practice'};
+  savedStepNotes.hidden=!keptNotes.length;
+  savedStepNotes.innerHTML='<summary>Notes you saved in the recent study view</summary>'+keptNotes.map(([key,note])=>'<h4>'+esc(noteLabels[key]||key)+'</h4><p style="white-space:pre-wrap">'+esc(note)+'</p>').join('');
   $('#next-day').disabled = selected === 30;
 
   mode = 'read';
@@ -1541,7 +1530,7 @@ $('#interview-tab').onclick = () => { mode = 'recall'; showReading(); };
 if ($('#simulator-tab')) {
   $('#simulator-tab').onclick = () => { mode = 'simulator'; showReading(); };
 }
-$('#resume').onclick = () => navigate(DAYS.find(d => count(d.day) < 5)?.day || 30);
+$('#resume').onclick = () => navigate(DAYS.find(d => count(d.day) < taskKeys.length)?.day || 30);
 
 $('#map-prev').onclick = () => $('#level-map').scrollBy({ left: -420, behavior: 'smooth' });
 $('#map-next').onclick = () => $('#level-map').scrollBy({ left: 420, behavior: 'smooth' });
@@ -1596,7 +1585,11 @@ $('#library').onclick = e => {
 
 // Export & Import Progress
 $('#export').onclick = () => {
-  const blob = new Blob([JSON.stringify({ version: 2, ...state }, null, 2)], { type: 'application/json' });
+  const storage = {};
+  for(const key of ['orbit.practice.v1','orbit-ai-depth-v1','orbit-ai-daily-v1','beginner-ai-practiced','llm-workshop-completed']) {
+    const value=localStorage.getItem(key);if(value!==null)storage[key]=value;
+  }
+  const blob = new Blob([JSON.stringify({ ...state, version: 2, storage }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1608,15 +1601,23 @@ $('#export').onclick = () => {
 
 $('#import').onchange = async e => {
   try {
-    const data = JSON.parse(await e.target.files[0].text());
+    const backup = JSON.parse(await e.target.files[0].text());
+    const data = backup.progress || backup;
     if (typeof data.days !== 'object' || !data.days) throw Error();
+    const recovery={};
+    const extraKeys=['orbit.practice.v1','orbit-ai-depth-v1','orbit-ai-daily-v1','beginner-ai-practiced','llm-workshop-completed'];
+    for(const key of [KEY,...extraKeys])recovery[key]=localStorage.getItem(key);
+    localStorage.setItem('orbit-before-dashboard-import-v1',JSON.stringify(recovery));
     state = {
+      ...state, ...data,
       days: data.days,
       last: data.last || 1,
       streak: data.streak || { count: 1, lastDate: '' },
       achievements: data.achievements || {},
       sound: typeof data.sound === 'boolean' ? data.sound : true
     };
+    for(const key of extraKeys)if(typeof backup.storage?.[key]==='string')localStorage.setItem(key,backup.storage[key]);
+    if(backup.notes && typeof backup.notes==='object')localStorage.setItem('orbit-ai-depth-v1',JSON.stringify(backup.notes));
     save();
     show();
     $('#backup-status').textContent = 'Progress restored!';

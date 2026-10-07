@@ -4,23 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Learn AI one day at a time: a simple explanation, a worked example, and a recall question, with full personalized lessons available when you need them.">
-  <title>My Study Plan · Orbit</title>
-  <link rel="stylesheet" href="style.css?v=game-4">
-  <link rel="stylesheet" href="game.css?v=game-4">
-  <link rel="stylesheet" href="../reader/vendor/katex.min.css">
-  <script defer src="study.bundle.js?v=game-4"></script>
-</head>
+  <meta name="description" content="Vashisht's personalized AI engineering interview deep dives: mechanisms, worked examples, diagrams, system designs, and project evidence.">
+  <title>Résumé Study Track · Orbit</title>
+  <link rel="stylesheet" href="style.css">
+
+
+
+<script defer src="reference.bundle.js?v=original-5"></script></head>
 <body>
   <a class="skip" href="#content">Skip to reading</a>
   <header>
-    <a class="brand" href="#overview">◈ ORBIT <span>MY STUDY PLAN</span></a>
-    <nav aria-label="Main navigation"><a href="#overview">My study plan</a><a href="../practice.html">CodeLab</a><a href="#library">Reference</a><button id="menu" aria-expanded="false" aria-controls="library">Find a topic</button></nav>
+    <a class="brand" href="#overview">◈ ORBIT <span>RÉSUMÉ TRACK</span></a>
+    <nav aria-label="Main navigation"><a href="../index.html">Original dashboard</a><a href="../practice.html">Code Lab</a><a href="../visual-map.html">Visual map</a><button id="menu" aria-expanded="false" aria-controls="library">Topics</button></nav>
   </header>
   <div class="layout">
     <aside id="library" aria-label="Topic library">
-      <a class="overview-link" href="#overview">← Back to daily learning</a>
-      <p><a href="#library">Browse the full reference</a></p>
+      <a class="overview-link" href="#overview">← Résumé study plan</a>
       <label for="search">Find a concept</label>
       <input id="search" type="search" placeholder="QLoRA, MPNet, OCR, retries…">
       <label for="project">Connect to your work</label>
@@ -30,10 +29,10 @@
       <label for="day">Connect to your daily path</label>
       <select id="day"><option value="">All days</option></select>
       <p id="progress" aria-live="polite"></p>
-      <nav id="chapters" aria-label="Reference chapters"></nav>
+      <nav id="chapters" aria-label="Deep-dive chapters"></nav>
       <p class="muted">Notes and self-ratings stay in this browser. Export them to keep a copy or move devices.</p>
-      <button id="export">Export all progress</button>
-      <label class="file-label" for="import">Restore a backup</label><input id="import" type="file" accept="application/json,.json">
+      <button id="export">Export my notes</button>
+      <label class="file-label" for="import">Import saved notes</label><input id="import" type="file" accept="application/json,.json">
       <p id="save-status" role="status"></p>
     </aside>
     <main id="content" tabindex="-1"><article id="lesson"></article></main>

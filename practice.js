@@ -8,7 +8,7 @@
   const MOCK_DAYS = [7, 14, 21];
   const studyDay = Number(new URLSearchParams(location.search).get('day'));
   if($('#study-return') && Number.isInteger(studyDay) && studyDay>=1 && studyDay<=30) {
-    $('#study-return').href = `ai-depth/index.html#day-${studyDay}/coding`;
+    $('#study-return').href = `index.html#day-${studyDay}`;
     $('#study-return').textContent = `← Day ${studyDay} · Coding`;
   }
   let cur = null;

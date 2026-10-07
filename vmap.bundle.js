@@ -284,7 +284,7 @@ window.LESSON_GUIDES = [
       <p><b>Small example:</b> ${esc(g.example)}</p>
       <details><summary>Check your understanding</summary><p>${esc(g.check)}</p><p>Explain the diagram without looking, then use the full lesson to check your answer.</p></details>
       <a class="learn-practice" href="${esc(href)}" ${href.startsWith('https:') ? 'target="_blank" rel="noopener noreferrer"' : ''}>Practice the related concept · ${href.startsWith('https:') ? 'Hello Interview ↗' : 'Code Lab →'}</a>
-      ${deep.length ? `<div class="learn-depth"><p><b>Learn this day step by step.</b> One idea, one example, then explain it yourself.</p><a class="learn-practice" href="${prefix}ai-depth/index.html#day-${Number(day)}">Open Day ${Number(day)} in Daily AI →</a></div>` : ''}
+
       <span hidden data-guide-day="${g.day}"></span>
     </section>`;
   };
@@ -357,7 +357,7 @@ window.LESSON_GUIDES = [
     ['Classical ML, SQL, and Spark', 'Focused second pass added', 27, 27, 'Model baselines, classifier/ranker design, TF-IDF/PageRank, shuffles, temporal joins, and streaming correctness.'],
     ['Project and interview readiness', 'Covered as practice', 27, 30, 'Demonstrate tested behavior and measured results; no automatic readiness guarantee.']
   ];
-  $('#coverage-grid').innerHTML = coverage.map(([title,status,a,b,note]) => `<article class="pcard"><h4>${esc(title)}</h4><b>${esc(status)}</b><p>${esc(note)}</p>${dl(a,b)}<p><a href="ai-depth/index.html#day-${a}">Learn this in Daily AI →</a></p></article>`).join('');
+  $('#coverage-grid').innerHTML = coverage.map(([title,status,a,b,note]) => `<article class="pcard"><h4>${esc(title)}</h4><b>${esc(status)}</b><p>${esc(note)}</p>${dl(a,b)}<p><a href="index.html#day-${a}">Open the full daily lesson →</a></p></article>`).join('');
 
   /* 3 · pipelines */
   const D = [
