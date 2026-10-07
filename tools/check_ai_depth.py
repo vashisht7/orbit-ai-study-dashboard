@@ -39,7 +39,10 @@ def main():
             walk(prereq, ancestors | {id})
     for c in chapters:
         walk(c['id'], set())
-    for path in ['index.html', 'visual-map.html', 'beginner/index.html']:
+    # The root entry now redirects to the unified dark study plan; the
+    # legacy visual-map and beginner pages retain their AI-depth links.
+    assert "ai-depth/index.html" in (ROOT / 'index.html').read_text()
+    for path in ['visual-map.html', 'beginner/index.html']:
         assert 'ai-depth-links.js' in (ROOT / path).read_text(), path
     assert code_count == 27 and questions == 84
     print(f'{len(chapters)} chapters: {code_count} executable examples passed, {questions} answers, 30 daily mappings, Code Lab links, and acyclic prerequisites verified.')

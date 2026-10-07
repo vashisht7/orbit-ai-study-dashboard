@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
   <meta name="description" content="Learn AI one day at a time: a simple explanation, a worked example, and a recall question, with full personalized lessons available when you need them.">
-  <title>Daily AI · Orbit</title>
-  <link rel="stylesheet" href="style.css?v=notebook-1">
+  <title>My Study Plan · Orbit</title>
+  <link rel="stylesheet" href="style.css?v=unified-1">
   <script src="../reader/vendor/marked.js"></script>
   <script src="content.js"></script>
   <link rel="stylesheet" href="../reader/vendor/katex.min.css">
@@ -14,14 +14,16 @@
   <script src="../beginner/course.js"></script>
   <script src="../lesson-guides.js"></script>
   <script src="../coding-routes.js"></script>
-  <script src="daily.js"></script>
-  <script defer src="app.js"></script>
+  <script src="../plan-data.js"></script>
+  <script src="daily.js?v=unified-1"></script>
+  <script src="unified.js?v=unified-1"></script>
+  <script defer src="app.js?v=unified-1"></script>
 </head>
 <body>
   <a class="skip" href="#content">Skip to reading</a>
   <header>
-    <a class="brand" href="#overview">◈ ORBIT <span>DAILY AI</span></a>
-    <nav aria-label="Main navigation"><a href="#overview">My next lesson</a><a href="../index.html">Dashboard</a><a href="../practice.html">Code Lab</a><button id="menu" aria-expanded="false" aria-controls="library">Library</button></nav>
+    <a class="brand" href="#overview">◈ ORBIT <span>MY STUDY PLAN</span></a>
+    <nav aria-label="Main navigation"><a href="#overview">Continue studying</a><button id="menu" aria-expanded="false" aria-controls="library">Reference</button></nav>
   </header>
   <div class="layout">
     <aside id="library" aria-label="Topic library">
@@ -38,8 +40,8 @@
       <p id="progress" aria-live="polite"></p>
       <nav id="chapters" aria-label="Reference chapters"></nav>
       <p class="muted">Notes and self-ratings stay in this browser. Export them to keep a copy or move devices.</p>
-      <button id="export">Export my notes</button>
-      <label class="file-label" for="import">Import saved notes</label><input id="import" type="file" accept="application/json,.json">
+      <button id="export">Export all progress</button>
+      <label class="file-label" for="import">Restore a backup</label><input id="import" type="file" accept="application/json,.json">
       <p id="save-status" role="status"></p>
     </aside>
     <main id="content" tabindex="-1"><article id="lesson"></article></main>

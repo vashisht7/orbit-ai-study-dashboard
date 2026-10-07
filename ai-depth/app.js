@@ -164,6 +164,7 @@
     box.querySelectorAll('input').forEach(x => x.oninput = update); update();
   }
   function show() {
+    DAILY_STUDY.cleanup();
     const id = location.hash.slice(1); current = byId.get(id) || null;
     const dayMatch = /^day-(\d+)$/.exec(id);
     const validDay = dayMatch && Number(dayMatch[1]) >= 1 && Number(dayMatch[1]) <= 30;
@@ -185,14 +186,14 @@
   $('.skip').onclick = e => { e.preventDefault(); $('#content').focus(); $('#content').scrollIntoView(); };
   $('#day').onchange = () => { library(); if (location.hash === '#library') overview(); };
   $('#menu').onclick = () => $('#menu').setAttribute('aria-expanded', String($('#library').classList.toggle('open')));
-  $('#export').onclick = () => download('orbit-ai-evidence.json', JSON.stringify({version:1, exported:new Date().toISOString(), notes:state, daily:DAILY_STUDY.export()},null,2), 'application/json');
+  $('#export').onclick = () => download('orbit-ai-evidence.json', JSON.stringify({version:1, exported:new Date().toISOString(), notes:state, daily:DAILY_STUDY.export(), progress:DAILY_STUDY.progress()},null,2), 'application/json');
   $('#import').onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
     try {
       if (file.size > 2_000_000) throw Error('File is too large. Choose an exported notes file under 2 MB.');
       const data = JSON.parse(await file.text());
       if (data.version !== 1) throw Error('This is not a supported Orbit notes export.');
-      state = {...state, ...validState(data.notes)}; if(data.daily) DAILY_STUDY.import(data.daily); save(); show(); $('#save-status').textContent = 'Notes imported; matching topics replaced by your saved copy.';
+      if(data.notes) state = {...state, ...validState(data.notes)}; if(data.daily) DAILY_STUDY.import(data.daily); if(data.progress) DAILY_STUDY.restore(data.progress); save(); show(); $('#save-status').textContent = 'Notes imported; matching topics replaced by your saved copy.';
     } catch (err) { $('#save-status').textContent = `Import failed: ${err.message}`; }
     e.target.value = '';
   };
