@@ -6,6 +6,11 @@
   const store = Object.assign({ solved: {}, code: {} }, JSON.parse(localStorage.getItem(KEY) || '{}'));
   const save = () => localStorage.setItem(KEY, JSON.stringify(store));
   const MOCK_DAYS = [7, 14, 21];
+  const studyDay = Number(new URLSearchParams(location.search).get('day'));
+  if($('#study-return') && Number.isInteger(studyDay) && studyDay>=1 && studyDay<=30) {
+    $('#study-return').href = `ai-depth/index.html#day-${studyDay}/coding`;
+    $('#study-return').textContent = `← Day ${studyDay} · Coding`;
+  }
   let cur = null;
 
   /* ---------------- Python harness (runs inside the worker) ---------------- */
@@ -184,11 +189,11 @@ onmessage=async ev=>{
     $('#p-meta').innerHTML = `${esc(cur.topic)} · <span class="d-${cur.diff}">${cur.diff}</span> · ${cur.tests.length} test cases`;
     const html = (window.marked && (marked.parse ? marked.parse(cur.statement) : marked(cur.statement))) || esc(cur.statement);
     $('#p-statement').innerHTML = html;
-    $('#code').value = store.code[cur.id] || cur.starter;
+    $('#code').value = store.code[cur.id] ?? cur.starter;
     $('#results').innerHTML = ''; $('#sol').hidden = true;
     $('#p-solved').hidden = !store.solved[cur.id];
     $('#side').classList.remove('open');
-    if (pushHash) history.replaceState(null, '', '#' + cur.id);
+    if (pushHash && location.hash !== '#' + cur.id) history.pushState(null, '', '#' + cur.id);
     renderList();
   }
 

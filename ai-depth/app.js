@@ -166,12 +166,12 @@
   function show() {
     DAILY_STUDY.cleanup();
     const id = location.hash.slice(1); current = byId.get(id) || null;
-    const dayMatch = /^day-(\d+)$/.exec(id);
+    const dayMatch = /^day-(\d+)(?:\/(learn|coding|design|explain))?$/.exec(id);
     const validDay = dayMatch && Number(dayMatch[1]) >= 1 && Number(dayMatch[1]) <= 30;
     const daily = !id || id === 'overview' || validDay;
     document.body.classList.toggle('daily-view', Boolean(daily));
     document.title = `${current?.title || 'Daily AI'} · Orbit`;
-    if(daily) DAILY_STUDY.render(validDay ? Number(dayMatch[1]) : !id && Number.isInteger(requestedDay) && requestedDay >= 1 && requestedDay <= 30 ? requestedDay : DAILY_STUDY.next());
+    if(daily) DAILY_STUDY.render(validDay ? Number(dayMatch[1]) : !id && Number.isInteger(requestedDay) && requestedDay >= 1 && requestedDay <= 30 ? requestedDay : DAILY_STUDY.next(), dayMatch?.[2]);
     else current ? showChapter(current) : overview();
     if (id && !['overview','library'].includes(id) && !current && !validDay) {
       const p = document.createElement('p'); p.className = 'notice'; p.textContent = 'That topic was not found. Choose a chapter below.'; $('#lesson').prepend(p);
@@ -186,14 +186,45 @@
   $('.skip').onclick = e => { e.preventDefault(); $('#content').focus(); $('#content').scrollIntoView(); };
   $('#day').onchange = () => { library(); if (location.hash === '#library') overview(); };
   $('#menu').onclick = () => $('#menu').setAttribute('aria-expanded', String($('#library').classList.toggle('open')));
-  $('#export').onclick = () => download('orbit-ai-evidence.json', JSON.stringify({version:1, exported:new Date().toISOString(), notes:state, daily:DAILY_STUDY.export(), progress:DAILY_STUDY.progress()},null,2), 'application/json');
+  const extraKeys = ['orbit.practice.v1','beginner-ai-practiced','llm-workshop-completed'];
+  window.ORBIT_BACKUP = {
+    restore(data) {
+      if (!data || typeof data !== 'object' || (!data.progress && !data.days && !data.notes && !data.daily)) throw Error('Choose an Orbit progress backup.');
+      const notes = data.notes ? validState(data.notes) : {};
+      const extras = {};
+      for (const key of extraKeys) if (typeof data.storage?.[key] === 'string') {
+        const value = JSON.parse(data.storage[key]);
+        const current = JSON.parse(localStorage.getItem(key) || (key === 'orbit.practice.v1' ? '{}' : '[]'));
+        if (key === 'orbit.practice.v1') {
+          if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('Invalid CodeLab backup.');
+          extras[key] = JSON.stringify({...current,...value,solved:{...current.solved,...value.solved},code:{...current.code,...value.code}});
+        } else {
+          if (!Array.isArray(value)) throw Error('Invalid reading progress backup.');
+          extras[key] = JSON.stringify([...new Set([...(Array.isArray(current)?current:[]),...value])]);
+        }
+      }
+      // Keep a recovery copy before importing anything; import only known application keys.
+      const recovery = {};
+      for (const key of [storageKey,'orbit-ai-progress-v1',...extraKeys]) recovery[key] = localStorage.getItem(key);
+      localStorage.setItem('orbit-ai-before-import-v1',JSON.stringify(recovery));
+      if(data.progress || data.days) DAILY_STUDY.restore(data.progress || data);
+      if(data.daily && !data.progress) DAILY_STUDY.import(data.daily);
+      state = {...state,...notes};
+      for(const [key,value] of Object.entries(extras)) localStorage.setItem(key,value);
+      save();
+    }
+  };
+  $('#export').onclick = () => {
+    const storage = {};
+    for(const key of extraKeys) {const value=localStorage.getItem(key);if(value!==null) storage[key]=value;}
+    download('orbit-all-progress.json', JSON.stringify({version:1, exported:new Date().toISOString(), notes:state, daily:DAILY_STUDY.export(), progress:DAILY_STUDY.progress(),storage},null,2), 'application/json');
+  };
   $('#import').onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
     try {
-      if (file.size > 2_000_000) throw Error('File is too large. Choose an exported notes file under 2 MB.');
+      if (file.size > 16_000_000) throw Error('File is too large. Choose an exported backup under 16 MB.');
       const data = JSON.parse(await file.text());
-      if (data.version !== 1) throw Error('This is not a supported Orbit notes export.');
-      if(data.notes) state = {...state, ...validState(data.notes)}; if(data.daily) DAILY_STUDY.import(data.daily); if(data.progress) DAILY_STUDY.restore(data.progress); save(); show(); $('#save-status').textContent = 'Notes imported; matching topics replaced by your saved copy.';
+      ORBIT_BACKUP.restore(data); show(); $('#save-status').textContent = 'Backup restored, including saved study and coding work.';
     } catch (err) { $('#save-status').textContent = `Import failed: ${err.message}`; }
     e.target.value = '';
   };
