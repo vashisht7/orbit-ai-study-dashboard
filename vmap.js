@@ -37,6 +37,7 @@
   const showGuide = () => {
     $('#guide-card').innerHTML = window.renderLessonGuide(Number(guideSelect.value));
     $('#guide-lesson').href = `index.html#day-${guideSelect.value}`;
+    if (window.hydrateAll3B1BTheaters) window.hydrateAll3B1BTheaters($('#guide-card'));
   };
   guideSelect.addEventListener('change', showGuide);
   const requestedDay = Number(new URLSearchParams(location.search).get('lesson'));

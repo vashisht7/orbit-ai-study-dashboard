@@ -91,6 +91,7 @@
       <div class="actions"><a href="../index.html#day-${c.foundation}">Review the foundation · Day ${c.foundation}</a><a href="../practice.html#${c.practice}">Related Code Lab →</a><button id="print">Print / save PDF</button>${/```python/.test(c.body) ? '<button id="code-download">Download Python example</button>' : ''}</div>
       <p class="muted">Prerequisites: ${c.prereq.length ? c.prereq.map(link).join(' · ') : 'Start here; use the foundation link if a term is unfamiliar.'}</p>
       <section class="diagram" aria-label="Interactive concept diagram"><h2>Follow the mechanism</h2><p>Select a step. Explain what crosses each arrow before moving on.</p><ol class="flow">${c.flow.map(([label],i) => `<li><button data-step="${i}" aria-pressed="${i===0}"><b>0${i+1}</b>${esc(label)}</button></li>`).join('')}</ol><div class="flow-detail" aria-live="polite">${esc(c.flow[0][1])}</div></section>
+      ${window.render3B1BTheaterHTML ? window.render3B1BTheaterHTML(window.getChapter3B1BDay(c.id)) : ''}
       ${c.sim ? '<section class="simulator" id="simulator" aria-label="Interactive worked example"></section>' : ''}
       <nav class="outline" aria-label="In this chapter"></nav><div class="prose">${prepareBody(c)}</div>
       <details class="sources"><summary>Primary sources & implementation notes · checked October 6, 2026</summary><p>Use these references to verify mechanisms and implementation-specific details. Vendor results are not your project results; “latest” documentation can change after this review.</p><ul>${c.sources.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)} ↗</a></li>`).join('')}</ul></details>
@@ -120,6 +121,7 @@
       download(`${c.id}.py`, `# ${c.title}\n# Synthetic teaching example; not a production system.\n\n${blocks.join('\n\n')}\nprint('Example checks passed.')\n`, 'text/x-python');
     };
     if (c.sim) simulator(c.sim);
+    if (window.hydrateAll3B1BTheaters) window.hydrateAll3B1BTheaters($('#lesson'));
   }
   const controls = {
     threshold: ['Abstention: coverage versus error', [['threshold','Confidence threshold',50,100,85,1]], 'Predicted confidences and correctness are a fixed synthetic set. Move the threshold; no model is running.'],

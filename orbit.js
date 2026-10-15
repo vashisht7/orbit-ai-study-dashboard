@@ -1332,9 +1332,22 @@ function showReading() {
   $('#read-tab').setAttribute('aria-pressed', mode === 'read');
   $('#interview-tab').setAttribute('aria-pressed', mode === 'recall');
   if ($('#simulator-tab')) $('#simulator-tab').setAttribute('aria-pressed', mode === 'simulator');
+  if ($('#b1b-tab')) $('#b1b-tab').setAttribute('aria-pressed', mode === 'b1b');
 
   if (mode === 'simulator') {
     renderNoteEchoesSimulatorView();
+    return;
+  }
+
+  if (mode === 'b1b') {
+    $('#reading').innerHTML = window.renderJobReadinessAuditHTML ? window.renderJobReadinessAuditHTML(selected) : '';
+    if (window.mountJobReadinessAuditEvents) {
+      window.mountJobReadinessAuditEvents($('#reading'), d => {
+        mode = 'read';
+        navigate(d);
+        requestAnimationFrame(() => $('#day-panel').scrollIntoView({ block: 'start', behavior: 'smooth' }));
+      });
+    }
     return;
   }
 
@@ -1349,6 +1362,7 @@ function showReading() {
     `;
     window.mountBeginnerLab($('#experiment'), c.experiment);
     mountQuizEvents();
+    if (window.hydrateAll3B1BTheaters) window.hydrateAll3B1BTheaters($('#reading'));
 
     // Setup interactive lens parts
     $$('.lens-part').forEach(part => {
@@ -1529,6 +1543,16 @@ $('#read-tab').onclick = () => { mode = 'read'; showReading(); };
 $('#interview-tab').onclick = () => { mode = 'recall'; showReading(); };
 if ($('#simulator-tab')) {
   $('#simulator-tab').onclick = () => { mode = 'simulator'; showReading(); };
+}
+if ($('#b1b-tab')) {
+  $('#b1b-tab').onclick = () => { mode = 'b1b'; showReading(); };
+}
+if ($('#job-audit-pill')) {
+  $('#job-audit-pill').onclick = () => {
+    mode = 'b1b';
+    showReading();
+    $('#reading').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
 }
 $('#resume').onclick = () => navigate(DAYS.find(d => count(d.day) < taskKeys.length)?.day || 30);
 

@@ -1,11 +1,11 @@
-/* Shared, accessible diagram cards for the dashboard, beginner reader and map. */
+/* Shared, accessible diagram cards + 3Blue1Brown interactive theater for dashboard, beginner reader, and visual map. */
 (() => {
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   window.renderLessonGuide = (day, prefix = '') => {
     const g = window.LESSON_GUIDES[Number(day)-1];
     if (!g) return '';
     const href = window.HELLO_PROBLEMS?.[g.problem] || `${prefix}practice.html#${g.problem}`;
-    const deep = (window.AI_DEPTH_LINKS || []).filter(c => c.days.includes(Number(day)));
+    const b1bHtml = typeof window.render3B1BTheaterHTML === 'function' ? window.render3B1BTheaterHTML(day) : '';
     return `<section class="learn-guide" aria-label="Simple explanation and topic diagram">
       <p class="learn-kicker">START HERE · THE TWO-MINUTE VERSION</p><h2>${esc(g.title)}</h2><p>${esc(g.summary)}</p>
       <p class="learn-help">Follow the arrows. Select a step to understand what happens.</p>
@@ -16,7 +16,7 @@
       <a class="learn-practice" href="${esc(href)}" ${href.startsWith('https:') ? 'target="_blank" rel="noopener noreferrer"' : ''}>Practice the related concept · ${href.startsWith('https:') ? 'Hello Interview ↗' : 'Code Lab →'}</a>
 
       <span hidden data-guide-day="${g.day}"></span>
-    </section>`;
+    </section>${b1bHtml}`;
   };
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-guide-step]');
