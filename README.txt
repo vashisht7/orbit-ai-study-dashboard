@@ -10,7 +10,7 @@ The advanced dark reference reader is included in reader/index.html. Daily AI as
 
 Easy learning edition: open cheatsheet.html for all 27 topics with NoteEchoes examples, model-process.html for the model walkthrough, or NoteEchoes_AI_Cheatsheet.pdf for the complete 38-page dark PDF.
 
-Start here: beginner/index.html. The new 30-lesson beginner course includes a 71-page PDF, 29 small runnable labs, an optional tested PyTorch decoder, plain-language math and interactive parameter experiments. Spend 20 minutes reading, 15 minutes running and changing one example, and 10 minutes explaining it aloud. Repeat a lesson when needed; 30 sessions need not mean 30 calendar days. The earlier book and cheat sheet remain available as references.
+Start here: beginner/index.html. The new 30-lesson beginner course includes an updated first-principles PDF, 29 small runnable labs, an optional tested PyTorch decoder, plain-language math and interactive parameter experiments. Spend 20 minutes reading, 15 minutes running and changing one example, and 10 minutes explaining it aloud. Repeat a lesson when needed; 30 sessions need not mean 30 calendar days. The earlier book and cheat sheet remain available as references.
 
 
 Code Lab expansion (October 4, 2026): 84 Python exercises with walkthroughs,
@@ -52,3 +52,10 @@ Full foundation and interview lessons remain expandable in the day itself;
 existing chapter URLs and the reference library remain available. Daily progress
 uses orbit-ai-daily-v1 without overwriting dashboard or reference progress.
 Notes export/import includes both the older reference notes and daily progress.
+
+
+First-principles revision (October 15, 2026): all 30 daily lessons now explain
+the concept, symbols, rule and derivation before a worked example. The dashboard
+and beginner reader put interactive practice after the lesson, and use specific
+recall questions. The beginner PDF matches this revision; earlier reference-book
+PDFs remain separate historical materials. Read beginner/manuscript.md offline.

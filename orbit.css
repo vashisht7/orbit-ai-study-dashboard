@@ -2265,4 +2265,4 @@ footer span {
 .codelab-link{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#34d399;text-decoration:none}
 .codelab-link:hover{text-decoration:underline}
 /* Keep study destinations accessible when the player bar fills a narrow screen. */
-@media (max-width:1200px){.topbar{height:auto;flex-wrap:wrap;gap:10px;padding:10px 18px}.topright{flex-basis:100%;justify-content:center;flex-wrap:wrap;gap:10px}.gamify-bar{margin-left:auto}}
+@media (max-width:1500px){.topbar{height:auto;flex-wrap:wrap;gap:10px;padding:10px 18px}.topright{flex-basis:100%;justify-content:center;flex-wrap:wrap;gap:10px}.gamify-bar{margin-left:auto}}

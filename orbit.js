@@ -410,101 +410,9 @@ function renderAchievementsModal() {
 // =====================================================================
 // INTERACTIVE COMPREHENSION CHECK (MINI-QUIZ DATA)
 // =====================================================================
-const COMPREHENSION_QUIZZES = {
-  1: {
-    q: "Why is an AI application fundamentally different from just a model?",
-    options: [
-      { t: "The application wraps learned numbers with validation, storage, permission checks, and real actions.", c: true },
-      { t: "The model runs directly in the database without any Python code.", c: false },
-      { t: "There is no difference; model and application are synonymous.", c: false }
-    ],
-    hint: "Models predict; application code validates, authorizes, and handles side-effects."
-  },
-  2: {
-    q: "What do the tensor dimensions [B, T, D] represent?",
-    options: [
-      { t: "Batch size (requests), Sequence length (tokens), and Hidden dimension (features).", c: true },
-      { t: "Bytes, Time, and Disk cache size.", c: false },
-      { t: "Blocks, Total weights, and Decoder depth.", c: false }
-    ],
-    hint: "B is how many examples, T is sequence length, D is representation width."
-  },
-  3: {
-    q: "What is the primary role of Softmax in intent classification?",
-    options: [
-      { t: "It transforms raw logits into a valid probability distribution that sums to 1.0.", c: true },
-      { t: "It automatically executes the highest scoring action on the server.", c: false },
-      { t: "It reduces the model weight count by 50%.", c: false }
-    ],
-    hint: "Softmax exponentiates and normalizes relative scores into probabilities."
-  },
-  4: {
-    q: "Why do count-based n-gram models fail on complex language tasks?",
-    options: [
-      { t: "They suffer combinatorial explosion and cannot generalize to unseen phrases without dense embeddings.", c: true },
-      { t: "Count models cannot handle ASCII characters.", c: false },
-      { t: "Modern GPUs only support floating point numbers.", c: false }
-    ],
-    hint: "Counting exact occurrences fails when vocabularies and context lengths grow."
-  },
-  5: {
-    q: "What is a Token ID?",
-    options: [
-      { t: "An integer row index into the embedding matrix, not an inherent measurement of meaning.", c: true },
-      { t: "A cryptographic token verifying the user's login identity.", c: false },
-      { t: "The exact semantic definition of a dictionary word.", c: false }
-    ],
-    hint: "Token IDs select vectors; the learned vectors themselves encode semantic relations."
-  },
-  6: {
-    q: "What happens if your learning rate is set too high during training?",
-    options: [
-      { t: "Updates overshoot the minimum and can cause the loss to oscillate or explode.", c: true },
-      { t: "The model weights freeze completely and never change.", c: false },
-      { t: "The GPU automatically shuts down.", c: false }
-    ],
-    hint: "Gradients guide direction; excessive step size jumps right over the valley."
-  },
-  9: {
-    q: "How does Self-Attention compute the output representation for a token?",
-    options: [
-      { t: "As a softmax-weighted sum of Value vectors, where weights come from Query-Key dot products.", c: true },
-      { t: "By concatenating all dictionary words alphabetically.", c: false },
-      { t: "By averaging every weight matrix across all layers.", c: false }
-    ],
-    hint: "Attention = Softmax(QK^T / sqrt(d)) * V: dynamic contextual mixing."
-  },
-  11: {
-    q: "What is the KV Cache used for during autoregressive generation?",
-    options: [
-      { t: "Caching prior Keys and Values so past tokens do not need to be recomputed at every new step.", c: true },
-      { t: "A long-term vector database storing user profile facts.", c: false },
-      { t: "Compressing prompt text into a single integer.", c: false }
-    ],
-    hint: "In decoding, past tokens are fixed. We save their K and V to avoid redundant matrix math."
-  },
-  15: {
-    q: "In a RAG system, what is the consequence of retrieval failure (low Recall@k)?",
-    options: [
-      { t: "The generator never receives the necessary facts, leading to hallucinations or refusals.", c: true },
-      { t: "The model fine-tuning process crashes with an out-of-memory error.", c: false },
-      { t: "The tokenizer produces invalid UTF-8 bytes.", c: false }
-    ],
-    hint: "A generator cannot cite or ground itself on evidence it was never supplied."
-  },
-  19: {
-    q: "Why must untrusted user input NEVER be treated as trusted system instructions?",
-    options: [
-      { t: "Because prompt injection inside data can override instructions and trigger unauthorized tool actions.", c: true },
-      { t: "Because language models cannot read quotation marks.", c: false },
-      { t: "Because HTTP requests cannot carry markdown.", c: false }
-    ],
-    hint: "Always enforce tool authorization, validation, and permissions outside the model."
-  }
-};
 
 function renderComprehensionCheck(day) {
-  const quiz = COMPREHENSION_QUIZZES[day] || {
+  const quiz = window.BEGINNER[day - 1].quiz || {
     q: `What is the core engineering takeaway of Lesson ${day}?`,
     options: [
       { t: "Connect the conceptual mechanism to your application boundary and verify it with measurable metrics.", c: true },
@@ -556,7 +464,7 @@ function mountQuizEvents() {
         }
       } else {
         btn.classList.add('incorrect');
-        toast('Not quite — think about the system boundary and mechanism.');
+        $('#quiz-feedback').classList.add('show');
       }
     };
   });
@@ -1354,10 +1262,12 @@ function showReading() {
   if (mode === 'read') {
     $('#reading').innerHTML = `
       <p class="eyebrow">${esc(c.part.toUpperCase())} · LESSON ${selected}</p>
+      <p class="notice">Concept → rule and derivation → worked example → practice → explain it.</p>
+      ${render(c.body)}
+      <h3>Practice after the explanation</h3>
+      <div id="experiment"></div>
       ${window.renderLessonGuide(selected)}
       ${noteLensCard()}
-      <div id="experiment"></div>
-      ${render(c.body)}
       ${renderComprehensionCheck(selected)}
     `;
     window.mountBeginnerLab($('#experiment'), c.experiment);

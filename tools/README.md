@@ -11,3 +11,26 @@ Browser checks (with Playwright available in `NODE_PATH`):
 - `python3 tools/check_ai_depth.py`: chapter structure and executable examples. Run the bundle build again if this regenerates content.
 
 The site is static. Progress stays on the current origin and browser; export and restore a backup to move subsequent progress between devices or from localhost to GitHub Pages.
+
+
+## Maintaining the 30 daily lessons
+
+Edit `beginner/manuscript.md` for all lesson prose, `beginner/lesson-meta.json`
+for navigation metadata, and `beginner/checks.json` for the 30 specific quizzes.
+The manuscript is the source of truth for the dashboard and beginner reader.
+Explain the concept, define every symbol, derive or justify the rule, identify
+chosen versus learned quantities, and only then give the worked example.
+Non-mathematical lessons should justify the mechanism rather than invent a formula.
+
+`node tools/build_study.cjs` now builds the course first and runs all 29 standard
+Python labs. The embedded example must match its downloadable lab exactly.
+Run `node tools/check_beginner.cjs` for all 60 lesson views, strict formula
+rendering, quizzes, reading order and mobile/desktop checks. Run
+`node tools/check_restored.cjs` to verify saved progress and legacy navigation.
+Both browser checks require Playwright and a local server on port 8765.
+
+`node tools/export_beginner_pdf.cjs` prints the same lesson data with KaTeX.
+It writes `output/pdf/AI_Engineering_First_Principles.pdf` and refreshes the
+existing `beginner/Beginner_AI_Engineering.pdf` download. The reader PDF is tracked for GitHub Pages; other PDFs remain ignored by
+Git. Regenerate and commit the reader PDF when publishing lesson changes. The optional PyTorch decoder is not run by the standard-library
+build and requires a separate PyTorch environment.

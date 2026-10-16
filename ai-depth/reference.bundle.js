@@ -85,7 +85,7 @@ window.LESSON_GUIDES = [
  ['Turn scores into a choice distribution','Softmax converts relative scores into positive numbers that add to one. Temperature changes how concentrated they are.',[['Logits','The model produces arbitrary scores; they are not yet probabilities.'],['Temperature','Divide scores by a positive temperature. Smaller values sharpen differences.'],['Stable softmax','Subtract the maximum, exponentiate, and divide by the total.'],['Choice','Choose or sample a token; probability does not guarantee factual correctness.']],'Equal scores [1000,1000] produce [0.5,0.5], without overflow when you subtract the maximum.','Why can a model be confidently wrong?','softmax'],
  ['Learn a tiny language pattern by counting','A count model predicts what tends to follow a token based on observed examples.',[['Examples','Read short sequences and record neighboring tokens.'],['Counts','Count each observed transition.'],['Normalize','Divide a transition count by the total count after that token.'],['Predict','Choose a likely next token, recognizing the limited context.']],'After “good”, three “morning” examples and one “night” example give probabilities 0.75 and 0.25 before smoothing.','What happens when a word pair never appeared in training?','stable-sigmoid'],
  ['Tokens are IDs; embeddings are vectors','Tokenization selects vocabulary IDs. An embedding table looks up a learned numeric representation for each ID.',[['Text','Start from the actual string and chat formatting.'],['Token IDs','The tokenizer splits the text according to its vocabulary.'],['Lookup','Use IDs to select rows from the embedding table.'],['Vectors','The model processes these rows; search embeddings use a separate representation contract.']],'“playing” might be one token or several subwords depending on the tokenizer.','Why should query and document embeddings use compatible models?','nearest-neighbors'],
- ['Use error to choose a small update','A gradient tells you how a small weight change affects the loss; the learning rate controls the step size.',[['Predict','Use current weights to compute an output.'],['Loss','Measure how far the output is from the target.'],['Gradient','Calculate the local slope with respect to each weight.'],['Update','Subtract learning rate × gradient, then repeat.']],'For loss (w−3)² at w=1, gradient is −4. A rate of 0.1 updates w to 1.4.','Why can increasing the learning rate make training worse?','linear-gradient'],
+ ['Use error to choose a small update','A gradient tells you how a small weight change affects the loss; the learning rate controls the step size.',[['Predict','Use current weights to compute an output.'],['Loss','Measure how far the output is from the target.'],['Gradient','Calculate the local slope with respect to each weight.'],['Update','Subtract learning rate × gradient, then repeat.']],'For prediction 2w and target 6, loss is (2w−6)². At w=1 the gradient is −16; a rate of 0.1 updates w to 2.6.','Why can increasing the learning rate make training worse?','linear-gradient'],
  ['Keep practice data separate from the exam','Train on one split, make decisions on validation data, and use untouched test data for the final estimate.',[['Split','Group related documents or users together to prevent leakage.'],['Train','Compute loss, clear gradients, backpropagate, and update weights.'],['Validate','Compare settings without updating weights on validation examples.'],['Test','Evaluate the chosen setup once on reserved data.']],'Two chunks of the same document in train and test can make memorization look like generalization.','What is the independent unit in your dataset: row, document, user, or time period?','binary-log-loss'],
  ['Layers mix features, then bend the mapping','A neural network alternates learned transformations with nonlinear functions; autograd tracks derivatives through them.',[['Input','A batch is a tensor with explicit dimensions.'],['Linear layer','Weights combine input features.'],['Nonlinearity','An activation allows more than one overall linear mapping.'],['Backpropagation','The chain rule assigns gradients to trainable parameters.']],'Two linear layers without a nonlinearity can be collapsed into a single linear transformation.','How do normalization and regularization solve different problems?','layer-norm'],
  ['Attention is a weighted information lookup','A query scores keys; normalized scores decide how much of each value to combine.',[['Query and keys','Compare the current token with tokens it is allowed to attend to.'],['Scores and mask','Scale dot products; hide future or disallowed positions.'],['Weights','Softmax converts scores to mixing weights.'],['Value mixture','Combine value vectors using those weights.']],'Equal scores for values 2 and 6 produce a weighted result of 4.','Why do we weight values rather than return attention scores?','attention'],
@@ -219,10 +219,10 @@ window.LESSON_GUIDES = [
       mode: 'gradient',
       title: 'Loss Landscape & Gradient Descent: Rolling Down L(w) = (2w − 6)²',
       equation: 'g = dL/dw = 4(2w − 6),    w_{t+1} = w_t − η · g',
-      intuition: 'Here is the exact Day 6 parabola L(w) = (2w − 6)² in 3Blue1Brown style! The minimum sits at w* = 3 where L(3) = 0. At any weight w (cyan dot), the yellow line is the local tangent slope g = 4(2w − 6). Because the slope points uphill, we step in the opposite direction: −η·g. Drag Learning Rate η: at η = 0.10 you converge smoothly (1 → 2.6 → 2.92 → 2.984); above η = 0.20 you bounce across both walls; above η = 0.25 your steps overshoot higher up the opposite wall and explode!',
+      intuition: 'Here is the exact Day 6 parabola L(w) = (2w − 6)² in 3Blue1Brown style! The minimum sits at w* = 3 where L(3) = 0. At any weight w (cyan dot), the yellow line is the local tangent slope g = 4(2w − 6). Because the slope points uphill, we step in the opposite direction: −η·g. Drag Learning Rate η: at η = 0.10 you converge smoothly (1 → 2.6 → 2.92 → 2.984); between η = 0.125 and 0.25 you cross the minimum while getting closer; at η = 0.25 the distance stays constant; above 0.25 it grows. These bounds apply to this exact quadratic.',
       resumeTie: 'NoteEchoes QLoRA & MFlash PyTorch Training: When fine-tuning Qwen3 with QLoRA or MPNet with contrastive loss, an oversized learning rate overshoots adapter valleys and spikes validation loss.',
       knobs: [
-        { id: 'k1', label: 'Learning Rate η (Step Size)', min: 0.01, max: 0.29, step: 0.01, val: 0.10 },
+        { id: 'k1', label: 'Learning Rate η (Step Multiplier)', min: 0.01, max: 0.29, step: 0.01, val: 0.10 },
         { id: 'k2', label: 'Initial Weight w₀', min: -0.2, max: 5.6, step: 0.2, val: 1.0 }
       ],
       toggle: 'Show Tangent Derivative Line & Step Vectors'
@@ -246,7 +246,7 @@ window.LESSON_GUIDES = [
       title: 'Why Nonlinearity Matters: Bending Space & Backprop Chain Rule',
       equation: 'h = σ(W₁ x + b₁),   ∂L/∂W₁ = (∂L/∂y · W₂^T ⊙ σ\'(z₁)) x^T',
       intuition: 'Without a nonlinearity σ (like ReLU, GELU, or SiLU), stacking 100 linear matrices collapses into a single flat linear transformation! Watch the 2D coordinate grid: W₁ rotates and stretches space, and the nonlinearity folds negative coordinates so tangled classes become linearly separable. In reverse, yellow chain-rule pulses propagate local derivatives backward layer-by-layer.',
-      resumeTie: 'MFlash & Qwen3 Internals: Qwen3 uses SwiGLU nonlinearities + Pre-RMSNorm so gradients flow cleanly through 28 layers without vanishing.',
+      resumeTie: 'MFlash & Qwen3 Internals: Qwen3 uses SwiGLU nonlinearities + Pre-RMSNorm to support optimization; this does not guarantee gradients never vanish.',
       knobs: [
         { id: 'k1', label: 'Nonlinear Fold Strength', min: 0.0, max: 1.0, step: 0.05, val: 0.85 },
         { id: 'k2', label: 'Hidden Layer Width', min: 2, max: 16, step: 2, val: 8 }
@@ -284,8 +284,8 @@ window.LESSON_GUIDES = [
       mode: 'rope_kv',
       title: 'RoPE Complex Rotation & Grouped-Query (GQA) KV Cache Memory',
       equation: 'RoPE(q_m, m) = R(mθ) q_m,   KV_bytes = 2 · L · H_kv · D_h · T · b',
-      intuition: 'Left canvas: Rotary Position Embedding (RoPE) encodes token position m by rotating 2D coordinate pairs by angle mθ on the unit circle—so the dot product between position m and n depends solely on their relative distance (m − n)! Right canvas: As sequence length T grows, caching past K and V vectors scales linearly; Grouped-Query Attention (GQA) shares KV heads across Query groups to slash RAM.',
-      resumeTie: 'NoteEchoes & Enterprise Serving: On iPhone UMA RAM, Qwen3 GQA (8 KV heads vs 16 Q heads) keeps a 1,024-token KV cache around ~114 MB so the app never hits iOS jetsam limits.',
+      intuition: 'Left canvas: Rotary Position Embedding (RoPE) encodes token position m by rotating 2D coordinate pairs by angle mθ on the unit circle—so position enters the query-key dot product through their relative rotation; the content vectors still matter. Right canvas: As sequence length T grows, caching past K and V vectors scales linearly; Grouped-Query Attention (GQA) shares KV heads across Query groups to slash RAM.',
+      resumeTie: 'NoteEchoes & Enterprise Serving: On iPhone UMA RAM, Qwen3 GQA (8 KV heads vs 16 Q heads) has an illustrative 112 MiB KV element count at 1,024 tokens and two bytes per element; weights, buffers and runtime overhead are additional.',
       knobs: [
         { id: 'k1', label: 'Token Distance Δpos = m − n', min: 0, max: 12, step: 1, val: 3 },
         { id: 'k2', label: 'Cached Context Length T', min: 512, max: 8192, step: 512, val: 2048 }
@@ -310,7 +310,7 @@ window.LESSON_GUIDES = [
       mode: 'fsm_json',
       title: 'Constrained Decoding: JSON Schema Finite State Machine + Semantic Check',
       equation: 'z\'_t[v] = z_t[v] if v ∈ Allowed(FSM_state) else −∞',
-      intuition: 'How did NoteEchoes achieve 100% Schema Validity across 1,080 evaluation cases? By compiling the target JSON schema into a Finite State Machine (FSM)! At every token step, any vocabulary token that would break valid JSON syntax or enum constraints has its logit masked to −∞ (coral red) before sampling. Yet syntax ≠ semantics: application code still validates whether the date/action makes sense!',
+      intuition: 'This teaching simulation illustrates grammar-constrained decoding; it does not establish which decoding mechanism a project used. A supported grammar can track allowed output states. At every token step, any vocabulary token that would break valid JSON syntax or enum constraints has its logit masked to −∞ (coral red) before sampling. Yet syntax ≠ semantics: application code still validates whether the date/action makes sense!',
       resumeTie: 'NoteEchoes (100% Schema Validity, 96.3% Exact Field Match) & Bank of America Validated JSON APIs: You separate syntactic grammar masking from semantic field accuracy.',
       knobs: [
         { id: 'k1', label: 'FSM Decoding Step (1–5)', min: 1, max: 5, step: 1, val: 3 },
@@ -335,7 +335,7 @@ window.LESSON_GUIDES = [
       day: 15,
       mode: 'rag_flow',
       title: 'Grounded RAG: Chunking, Retrieval Recall@k Ceiling & Faithfulness',
-      equation: 'P(Correct Answer) ≤ Recall@k(Retriever) × Faithfulness(Generator | Context)',
+      equation: 'P(Evidence present AND supported answer) = P(Evidence present) × P(Supported answer | Evidence present)',
       intuition: 'Follow the query vector searching across document chunks. If the gold evidence chunk (green star) falls outside your Top-k retrieval cutoff (or gets split mid-sentence by zero overlap), the LLM context window never sees the fact—making grounded answering impossible regardless of prompt engineering!',
       resumeTie: 'Agentic RAG (LangGraph + Claude + Pinecone + Ragas) & Bank of America: You isolate Retrieval Recall@k from Generator Faithfulness using Ragas so you always fix the true bottleneck.',
       knobs: [
@@ -374,8 +374,8 @@ window.LESSON_GUIDES = [
       day: 18,
       mode: 'durable_fsm',
       title: 'Durable Agent State Machine: LangGraph Cycles, WAL & Crash Recovery',
-      equation: 'State_{t+1} = T(State_t, Event),   IdempotentExec(op_id) -> At-Most-Once Side Effect',
-      intuition: 'What happens when a network timeout or crash hits right after an external API executes, before the response returns? Without a Write-Ahead Log (WAL) and deterministic operation ID, a naive retry executes the action twice! Step through the state machine and trigger a mid-flight crash to see how WAL receipts + collision-safe undo guarantee durability.',
+      equation: 'State_{t+1} = T(State_t, Event),   Remote idempotency or reconciliation is required across an uncertain side effect',
+      intuition: 'What happens when a network timeout or crash hits right after an external API executes, before the response returns? Without a Write-Ahead Log (WAL) and deterministic operation ID, a naive retry executes the action twice! Step through the state machine and trigger a mid-flight crash to inspect what must be recorded. A local WAL or operation ID alone cannot guarantee exactly-once remote effects.',
       resumeTie: 'MFlash (SQLite WAL journaling, task receipts, idempotent retries, collision-safe undo) & Agentic RAG (LangGraph self-correcting state loop with max-step budget).',
       knobs: [
         { id: 'k1', label: 'Active Lifecycle Phase (1–5)', min: 1, max: 5, step: 1, val: 3 },
@@ -453,7 +453,7 @@ window.LESSON_GUIDES = [
       mode: 'lora_nf4',
       title: 'LoRA & QLoRA Geometry: Low-Rank Bottleneck ΔW = B·A & NF4 Quantiles',
       equation: 'h = W_0^NF4 x + (α / √r) B (A x),   where A ∈ R^{r×d}, B ∈ R^{d×r}, r ≪ d',
-      intuition: 'Instead of updating a massive d×d matrix (1,048,576 weights for 1024×1024), LoRA freezes W₀ in 4-bit NormalFloat (NF4, whose quantization bins hug the bell curve N(0,1) so dense near-zero weights get maximum precision!) and routes gradients through a tiny r-dimensional bottleneck: A compresses d → r, and B expands r → d!',
+      intuition: 'Instead of updating a massive d×d matrix (1,048,576 weights for 1024×1024), LoRA freezes the base W₀ and learns a low-rank update. QLoRA additionally uses a low-bit frozen base, often 4-bit NormalFloat (NF4, whose quantization bins hug the bell curve N(0,1) so dense near-zero weights get maximum precision!) and routes gradients through a tiny r-dimensional bottleneck: A compresses d → r, and B expands r → d!',
       resumeTie: 'NoteEchoes & Bank of America: You fine-tuned Qwen3 with QLoRA (achieving 96.3% action-field exact match) and fine-tuned an enterprise LLM to extract specific PDF fields into JSON.',
       knobs: [
         { id: 'k1', label: 'LoRA Bottleneck Rank r', min: 4, max: 64, step: 4, val: 16 },
@@ -466,7 +466,7 @@ window.LESSON_GUIDES = [
       mode: 'dpo_align',
       title: 'Post-Training Alignment: DPO Preference Margin & KL-Divergence Tether',
       equation: 'L_DPO = −log σ( β log(π_θ(y_w|x)/π_ref(y_w|x)) − β log(π_θ(y_l|x)/π_ref(y_l|x)) )',
-      intuition: 'Supervised Fine-Tuning (SFT) teaches format; preference alignment (DPO / RLHF / GRPO) shapes behavior by widening the log-probability margin between a preferred answer y_w (green) and a rejected answer y_l (coral). The β KL-divergence tether acts like a spring anchored to π_ref so the model cannot collapse or reward-hack!',
+      intuition: 'Supervised Fine-Tuning (SFT) teaches format; preference alignment (DPO / RLHF / GRPO) shapes behavior by widening the log-probability margin between a preferred answer y_w (green) and a rejected answer y_l (coral). The β KL-divergence tether acts like a spring anchored to π_ref to discourage large shifts from the reference. This is not a guarantee against collapse or reward exploitation.',
       resumeTie: 'Understanding when SFT/QLoRA is the right tool (teaching deterministic JSON extraction & action schemas in NoteEchoes/BofA) vs when DPO/GRPO is used for open-ended reasoning.',
       knobs: [
         { id: 'k1', label: 'KL Penalty Beta β (Tether Stiffness)', min: 0.05, max: 1.00, step: 0.05, val: 0.25 },
@@ -478,7 +478,7 @@ window.LESSON_GUIDES = [
       day: 26,
       mode: 'multimodal_ocr',
       title: 'Multimodal Error Boundaries: OCR Layout Boxes & Voice-to-Action Cascades',
-      equation: 'P(Action OK) = P(OCR/ASR OK) × P(LLM Extraction OK | Transcript) × P(Validation OK)',
+      equation: 'P(A AND B AND C) = P(A) × P(B | A) × P(C | A AND B)',
       intuition: 'In multimodal pipelines, representation boundaries compound errors: a skewed PDF table cell or misheard spoken number ("15" vs "50") looks completely fluent to a downstream text LLM! Visualizing bounding-box layout coordinates + token confidence shows why OCR-assisted extraction pairs layout provenance with field-level validation.',
       resumeTie: 'Bank of America (Deployed OCR-assisted PDF extraction with fine-tuned LLM, cutting manual effort 50–60%) & NoteEchoes (3-language multimodal voice + OCR ingestion).',
       knobs: [
@@ -917,14 +917,16 @@ window.LESSON_GUIDES = [
       }
 
       // Regime diagnosis
-      const factor = Math.abs(1 - 8 * lr);
       let regime = '✨ Fast Convergence (|1 − 8η| < 1)';
       let regColor = C.green;
       if (lr > 0.25) {
         regime = '💥 DIVERGENCE EXPLOSION! (η > 0.25 overshoots valley)';
         regColor = C.red;
-      } else if (lr > 0.14) {
-        regime = '⚠️ Overshooting Oscillation across Valley Walls';
+      } else if (Math.abs(lr - 0.25) < 1e-9) {
+        regime = 'Constant-distance oscillation (η = 0.25)';
+        regColor = C.orange;
+      } else if (lr > 0.125) {
+        regime = 'Converging while crossing the minimum (0.125 < η < 0.25)';
         regColor = C.orange;
       } else if (lr < 0.04) {
         regime = '🐢 Slow Asymptotic Crawl (Small Step Size)';

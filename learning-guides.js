@@ -7,7 +7,7 @@
     const href = window.HELLO_PROBLEMS?.[g.problem] || `${prefix}practice.html#${g.problem}`;
     const b1bHtml = typeof window.render3B1BTheaterHTML === 'function' ? window.render3B1BTheaterHTML(day) : '';
     return `<section class="learn-guide" aria-label="Simple explanation and topic diagram">
-      <p class="learn-kicker">START HERE · THE TWO-MINUTE VERSION</p><h2>${esc(g.title)}</h2><p>${esc(g.summary)}</p>
+      <p class="learn-kicker">REVIEW · CONNECT THE STEPS</p><h2>${esc(g.title)}</h2><p>${esc(g.summary)}</p>
       <p class="learn-help">Follow the arrows. Select a step to understand what happens.</p>
       <ol class="learn-flow">${g.steps.map(([name, detail], i) => `<li><button type="button" data-guide-step="${i}" aria-pressed="${i===0}"><span>${i+1}</span>${esc(name)}</button></li>`).join('')}</ol>
       <p class="learn-detail" aria-live="polite"><b>${esc(g.steps[0][0])}:</b> ${esc(g.steps[0][1])}</p>
@@ -16,7 +16,7 @@
       <a class="learn-practice" href="${esc(href)}" ${href.startsWith('https:') ? 'target="_blank" rel="noopener noreferrer"' : ''}>Practice the related concept · ${href.startsWith('https:') ? 'Hello Interview ↗' : 'Code Lab →'}</a>
 
       <span hidden data-guide-day="${g.day}"></span>
-    </section>${b1bHtml}`;
+    </section>${b1bHtml ? `<details class="optional-visual"><summary>Optional advanced visualization</summary>${b1bHtml}</details>` : ''}`;
   };
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-guide-step]');

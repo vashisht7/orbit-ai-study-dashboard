@@ -31,15 +31,5 @@
     "27": "[(0.9, 'note-C'), (0.8, 'note-A')]",
     "28": "schema 15/15 100.0%\nintent 13/15 86.7%\nsafe_action 15/15 100.0%\nNext step: inspect the two intent failures.",
     "29": "['learning_rate']"
-  },
-  "optional_transformer": {
-    "python": "3.12.14",
-    "torch": "2.8.0",
-    "device": "CPU",
-    "steps": 40,
-    "parameters": 14962,
-    "first_training_loss": 3.0724,
-    "last_training_loss": 1.4512,
-    "causal_check_passed": true
   }
 }

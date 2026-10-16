@@ -1,0 +1,212 @@
+[
+  {
+    "id": "01",
+    "title": "A small app, a clear goal, and a new way to learn",
+    "part": "Start here",
+    "experiment": "none",
+    "lab": "lesson_01.py"
+  },
+  {
+    "id": "02",
+    "title": "Numbers, vectors and matrices without the mystery",
+    "part": "Make the numbers familiar",
+    "experiment": "none",
+    "lab": "lesson_02.py"
+  },
+  {
+    "id": "03",
+    "title": "Scores become probabilities: softmax and temperature",
+    "part": "Make the numbers familiar",
+    "experiment": "temperature",
+    "lab": "lesson_03.py"
+  },
+  {
+    "id": "04",
+    "title": "Build your first language predictor with counts",
+    "part": "Make a model you can see",
+    "experiment": "none",
+    "lab": "lesson_04.py"
+  },
+  {
+    "id": "05",
+    "title": "Turn text into tokens, then into embeddings",
+    "part": "Make a model you can see",
+    "experiment": "none",
+    "lab": "lesson_05.py"
+  },
+  {
+    "id": "06",
+    "title": "Loss and gradients: teach one number to improve",
+    "part": "Make a model you can see",
+    "experiment": "learning",
+    "lab": "lesson_06.py"
+  },
+  {
+    "id": "07",
+    "title": "The training loop, batches and honest evaluation",
+    "part": "Make a model you can see",
+    "experiment": "none",
+    "lab": "lesson_07.py"
+  },
+  {
+    "id": "08",
+    "title": "Neural networks and autograd, one layer at a time",
+    "part": "Build the language model",
+    "experiment": "none",
+    "lab": "lesson_08.py"
+  },
+  {
+    "id": "09",
+    "title": "Attention: let one word consult the others",
+    "part": "Build the language model",
+    "experiment": "attention",
+    "lab": "lesson_09.py"
+  },
+  {
+    "id": "10",
+    "title": "Assemble a tiny transformer and follow one token",
+    "part": "Build the language model",
+    "experiment": "transformer",
+    "lab": "lesson_10.py"
+  },
+  {
+    "id": "11",
+    "title": "Position, context limits and the KV cache",
+    "part": "Build the language model",
+    "experiment": "cache",
+    "lab": "lesson_11.py"
+  },
+  {
+    "id": "12",
+    "title": "Choose output tokens and understand inference optimizations",
+    "part": "Build the language model",
+    "experiment": "temperature",
+    "lab": "lesson_12.py"
+  },
+  {
+    "id": "13",
+    "title": "Prompting, context and JSON that deserves checking",
+    "part": "Give the model a useful job",
+    "experiment": "context",
+    "lab": "lesson_13.py"
+  },
+  {
+    "id": "14",
+    "title": "Embeddings and search: find meaning without exact words",
+    "part": "Give the model a useful job",
+    "experiment": "similarity",
+    "lab": "lesson_14.py"
+  },
+  {
+    "id": "15",
+    "title": "Build RAG from a question and two documents",
+    "part": "Give the model a useful job",
+    "experiment": "none",
+    "lab": "lesson_15.py"
+  },
+  {
+    "id": "16",
+    "title": "Hybrid ranking and knowledge graphs without the hype",
+    "part": "Give the model a useful job",
+    "experiment": "none",
+    "lab": "lesson_16.py"
+  },
+  {
+    "id": "17",
+    "title": "Tools and human review: from a suggestion to an action",
+    "part": "Make the app dependable",
+    "experiment": "none",
+    "lab": "lesson_17.py"
+  },
+  {
+    "id": "18",
+    "title": "Agents, memory and surviving a crash",
+    "part": "Make the app dependable",
+    "experiment": "none",
+    "lab": "lesson_18.py"
+  },
+  {
+    "id": "19",
+    "title": "Safety and prompt injection in plain language",
+    "part": "Make the app dependable",
+    "experiment": "none",
+    "lab": "lesson_19.py"
+  },
+  {
+    "id": "20",
+    "title": "MCP and A2A: understand the interface before the acronym",
+    "part": "Make the app dependable",
+    "experiment": "none",
+    "lab": "lesson_20.py"
+  },
+  {
+    "id": "21",
+    "title": "Evaluation and statistics you can actually use",
+    "part": "Know whether it works",
+    "experiment": "none",
+    "lab": "lesson_21.py"
+  },
+  {
+    "id": "22",
+    "title": "Serving, latency, cost and model routing",
+    "part": "Know whether it works",
+    "experiment": "cache",
+    "lab": "lesson_22.py"
+  },
+  {
+    "id": "23",
+    "title": "LLMOps, architecture and data engineering",
+    "part": "Know whether it works",
+    "experiment": "none",
+    "lab": "lesson_23.py"
+  },
+  {
+    "id": "24",
+    "title": "Fine-tuning, LoRA and QLoRA through your own adapter",
+    "part": "Adapt the model deliberately",
+    "experiment": "lora",
+    "lab": "lesson_24.py"
+  },
+  {
+    "id": "25",
+    "title": "Preferences, reinforcement learning and distillation",
+    "part": "Adapt the model deliberately",
+    "experiment": "none",
+    "lab": "lesson_25.py"
+  },
+  {
+    "id": "26",
+    "title": "Multimodal AI and the complete NoteEchoes journey",
+    "part": "Connect everything to your app",
+    "experiment": "none",
+    "lab": "lesson_26.py"
+  },
+  {
+    "id": "27",
+    "title": "Coding, SQL, system design and behavioral interviews",
+    "part": "Turn understanding into interview performance",
+    "experiment": "none",
+    "lab": "lesson_27.py"
+  },
+  {
+    "id": "28",
+    "title": "Your capstone and a learning plan that allows understanding",
+    "part": "Turn understanding into interview performance",
+    "experiment": "none",
+    "lab": "lesson_28.py"
+  },
+  {
+    "id": "29",
+    "title": "Your parameter map and a gentle glossary",
+    "part": "Keep beside your experiments",
+    "experiment": "none",
+    "lab": "lesson_29.py"
+  },
+  {
+    "id": "30",
+    "title": "Optional workshop: read and run the complete tiny decoder",
+    "part": "Build it when you are ready",
+    "experiment": "none",
+    "lab": "tiny_decoder.py"
+  }
+]
