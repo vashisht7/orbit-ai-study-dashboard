@@ -16,9 +16,38 @@
       <a class="learn-practice" href="${esc(href)}" ${href.startsWith('https:') ? 'target="_blank" rel="noopener noreferrer"' : ''}>Practice the related concept · ${href.startsWith('https:') ? 'Hello Interview ↗' : 'Code Lab →'}</a>
 
       <span hidden data-guide-day="${g.day}"></span>
-    </section>${b1bHtml ? `<details class="optional-visual"><summary>Optional advanced visualization</summary>${b1bHtml}</details>` : ''}`;
+    </section>${b1bHtml ? `<section class="lesson-animation" id="lesson-animation-${g.day}" aria-label="Lesson ${g.day} animation">${b1bHtml}</section>` : ''}`;
+  };
+  // The same navigation and section IDs are used by both daily readers.
+  window.renderLessonContents = day => {
+    const c = window.BEGINNER?.[Number(day)-1];
+    if (!c) return '';
+    const headings = [...c.body.matchAll(/^### (.+)$/gm)].map(m => m[1]);
+    return `<nav class="lesson-contents" aria-label="Lesson ${Number(day)} sections">
+      <p><b>Understand the rule, then try it</b></p>
+      <button type="button" class="lesson-watch" data-open-lesson-animation="${Number(day)}">🎬 ${window.getLessonVisualKind?.(day) === 'diagram' ? 'Explore' : 'Watch'} Lesson ${Number(day)} ${window.getLessonVisualKind?.(day) || 'animation'}</button>
+      <p class="lesson-contents-help">Read in order, or jump to the part you want to understand.</p>
+      <ol>${headings.map((h,i)=>`<li><button type="button" data-lesson-section="lesson-${Number(day)}-section-${i}">${esc(h)}</button></li>`).join('')}</ol>
+    </nav>`;
+  };
+  window.renderLessonText = (day, renderer) => {
+    let i = 0;
+    return renderer(window.BEGINNER[Number(day)-1].body).replace(/<h3>/g, () => `<h3 id="lesson-${Number(day)}-section-${i++}" class="lesson-section-heading" tabindex="-1">`);
   };
   document.addEventListener('click', event => {
+    const jump = event.target.closest('[data-lesson-section]');
+    if (jump) {
+      const heading = document.getElementById(jump.dataset.lessonSection);
+      heading?.scrollIntoView({block:'start'});
+      heading?.focus({preventScroll:true});
+      return;
+    }
+    const watch = event.target.closest('[data-open-lesson-animation]');
+    if (watch) {
+      if (typeof window.openLessonAnimation === 'function') window.openLessonAnimation();
+      else document.getElementById('lesson-animation-'+watch.dataset.openLessonAnimation)?.scrollIntoView({block:'start'});
+      return;
+    }
     const button = event.target.closest('[data-guide-step]');
     if (!button) return;
     const card = button.closest('.learn-guide');

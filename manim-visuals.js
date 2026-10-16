@@ -108,7 +108,7 @@
         { id: 'k1', label: 'Learning Rate η (Step Multiplier)', min: 0.01, max: 0.29, step: 0.01, val: 0.10 },
         { id: 'k2', label: 'Initial Weight w₀', min: -0.2, max: 5.6, step: 0.2, val: 1.0 }
       ],
-      toggle: 'Show Tangent Derivative Line & Step Vectors'
+      toggle: 'Hide Tangent Line & Step Vectors'
     },
     {
       day: 7,
@@ -295,15 +295,15 @@
     {
       day: 21,
       mode: 'eval_calibration',
-      title: 'Evaluation Geometry: Calibration Reliability Curve, Wilson CI & Ragas Triad',
-      equation: 'ECE = Σ_b (n_b / N) |acc(b) − conf(b)|,   Faithfulness = |Supported Claims| / |Total Claims|',
+      title: 'Evaluation: Confidence, Success Rate and Sample Size',
+      equation: 'Accuracy = correct / cases; SE ≈ sqrt(p × (1 − p) / n)',
       intuition: 'Left: A perfectly calibrated model sits on the dashed y = x diagonal (when it claims 80% confidence, it is right 80% of the time). Uncalibrated neural nets bow below the diagonal (overconfident). Right: Decomposing evaluation into Wilson 95% confidence intervals and the Ragas Triad (Context Recall, Faithfulness, Answer Relevance).',
       resumeTie: 'NoteEchoes (96.3% action-field exact match, 100% schema validity across 1,080 cases), Agentic RAG (Ragas evaluation), & Sedin (ROUGE summarization evaluation).',
       knobs: [
         { id: 'k1', label: 'Temperature Scaling Calibration', min: 0.5, max: 2.5, step: 0.1, val: 1.4 },
         { id: 'k2', label: 'Evaluation Sample Size N', min: 50, max: 1080, step: 50, val: 1080 }
       ],
-      toggle: 'Show 95% Wilson Confidence Interval Error Bars'
+      toggle: 'Show One Standard Error (Not a Confidence Interval)'
     },
     {
       day: 22,
@@ -342,7 +342,7 @@
         { id: 'k1', label: 'LoRA Bottleneck Rank r', min: 4, max: 64, step: 4, val: 16 },
         { id: 'k2', label: 'Scaling Alpha α', min: 8, max: 128, step: 8, val: 32 }
       ],
-      toggle: 'Show NF4 Bell-Curve Quantization Bins vs Uniform INT4'
+      toggle: 'Show Illustrative Low-Bit Quantization Bins'
     },
     {
       day: 25,
@@ -678,7 +678,7 @@
     const k1 = state.k1;
     const k2 = state.k2;
     const tog = state.toggle;
-    const t = state.animProgress; // 0..1 continuous animation phase
+    const t = Math.max(0, Math.min(0.999999, state.animProgress || 0)); // bounded animation phase
 
     // ----------------------------------------------------------------------
     // DAY 6: PARABOLIC LOSS LANDSCAPE & GRADIENT DESCENT (L(w) = (2w - 6)^2)
@@ -710,7 +710,8 @@
       ctx.textAlign = 'center';
       for (let wv = 0; wv <= 6; wv++) {
         const px = toX(wv);
-        ctx.fillText(`w=${wv}`, px, padT + plotH + 18);
+        ctx.fillStyle = wv === 3 ? C.green : C.muted;
+        ctx.fillText(wv === 3 ? 'w*=3' : `w=${wv}`, px, padT + plotH + 18);
       }
       ctx.textAlign = 'right';
       for (let lv of [0, 10, 20, 30]) {
@@ -738,7 +739,7 @@
 
       // Minimum target star at w* = 3, L = 0
       drawDot(ctx, toX(3), toY(0), 7, C.green, true);
-      drawBadge(ctx, toX(3), toY(0) - 18, 'Minimum w* = 3 (L=0)', C.green);
+
 
       // Compute gradient descent trajectory steps
       const steps = [];
@@ -980,7 +981,8 @@
       ctx.strokeStyle = C.axis;
       ctx.beginPath(); ctx.moveTo(lx, 26); ctx.lineTo(lx, by); ctx.lineTo(lx + lw, by); ctx.stroke();
 
-      const maxExp = Math.exp(Math.max(z1, 1.5) / Math.max(0.35, temp));
+      const maxLogit = Math.max(z1, 1.0, 0.0);
+      const maxExp = 1;
       ctx.save();
       ctx.strokeStyle = C.blue;
       ctx.lineWidth = 2.5;
@@ -989,7 +991,7 @@
       ctx.beginPath();
       for (let i = 0; i <= 80; i++) {
         const zv = -1.5 + (i / 80) * 5.5;
-        const ev = Math.exp(zv / Math.max(0.35, temp));
+        const ev = Math.exp((zv - maxLogit) / temp);
         const px = lx + (i / 80) * lw;
         const py = by - Math.min(1, ev / maxExp) * lh;
         if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
@@ -999,11 +1001,11 @@
 
       [z1, 1.0, 0.0].forEach((zv, idx) => {
         const px = lx + ((zv - (-1.5)) / 5.5) * lw;
-        const ev = Math.exp(zv / Math.max(0.35, temp));
+        const ev = Math.exp((zv - maxLogit) / temp);
         const py = by - Math.min(1, ev / maxExp) * lh;
         drawDot(ctx, px, py, 6, cols[idx], true);
       });
-      drawBadge(ctx, lx + lw * 0.5, 22, `Exponential Map e^(z / T) at T=${temp.toFixed(2)}`, C.blue);
+      drawBadge(ctx, lx + lw * 0.5, 22, `Relative weights exp((z−max)/T), T=${temp.toFixed(2)}`, C.blue);
 
       // Right: Normalized Softmax Simplex Bars + Threshold τ = 0.75
       const rx = w * 0.56, rw = w * 0.38;
@@ -1038,14 +1040,14 @@
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(tx, 52); ctx.lineTo(tx, h - 28); ctx.stroke();
       ctx.restore();
-      drawBadge(ctx, tx, h - 18, 'Policy Gate τ = 75%', C.yellow);
+      drawBadge(ctx, tx, h - 18, 'Illustrative cutoff = 75%', C.yellow);
 
       telemetryEl.innerHTML = `
         <div class="b1b-metrics">
           <span><b>Raw Logits:</b> <code>[${logits.map(x => x.toFixed(1)).join(', ')}]</code></span>
           <span><b>Temperature T:</b> <code>${temp.toFixed(2)}</code></span>
           <span><b>Softmax Probs:</b> <code style="color:${C.blue}">[${probs.map(p => (p * 100).toFixed(1) + '%').join(', ')}]</code></span>
-          <span><b>Action Decision:</b> <code style="color:${probs[0] >= 0.75 ? C.green : C.orange}">${probs[0] >= 0.75 ? 'Execute Reminder' : 'Clarify (<75%)'}</code></span>
+          <span><b>Illustrative cutoff check:</b> <code style="color:${probs[0] >= 0.75 ? C.green : C.orange}">${probs[0] >= 0.75 ? 'Reminder passes cutoff; still validate' : 'Reminder below cutoff'}</code></span>
         </div>
       `;
       return;
@@ -1203,15 +1205,16 @@
     if (scene.mode === 'contrastive') {
       const mag = k1;
       const step = k2;
-      const showSphere = !tog;
+      const showSphere = tog;
 
       const cx = w * 0.36, cy = h * 0.56, r = Math.min(w * 0.22, h * 0.36);
+      const unitLength = r / Math.max(1, mag);
       if (showSphere) {
         ctx.save();
         ctx.strokeStyle = 'rgba(88, 196, 221, 0.35)';
         ctx.setLineDash([6, 4]);
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, unitLength, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
 
@@ -1222,14 +1225,14 @@
       // Hard negative d- gets pushed away from qAng as step increases (from 0.62 to 2.35)
       const negAng = 0.62 + (step / 10) * 1.73;
 
-      drawArrow(ctx, cx, cy, cx + r * Math.cos(qAng), cy - r * Math.sin(qAng), C.blue, 3.2, 10, true);
-      const dLen = r * (0.55 + 0.3 * mag);
+      drawArrow(ctx, cx, cy, cx + unitLength * Math.cos(qAng), cy - unitLength * Math.sin(qAng), C.blue, 3.2, 10, true);
+      const dLen = unitLength * mag;
       drawArrow(ctx, cx, cy, cx + dLen * Math.cos(posAng), cy - dLen * Math.sin(posAng), C.green, 3.2, 10, true);
-      drawArrow(ctx, cx, cy, cx + r * Math.cos(negAng), cy - r * Math.sin(negAng), C.red, 2.8, 9, true);
+      drawArrow(ctx, cx, cy, cx + unitLength * Math.cos(negAng), cy - unitLength * Math.sin(negAng), C.red, 2.8, 9, true);
 
-      drawBadge(ctx, cx + r * Math.cos(qAng) + 12, cy - r * Math.sin(qAng), 'Anchor Query q', C.blue, 'left');
+      drawBadge(ctx, cx + unitLength * Math.cos(qAng) + 12, cy - unitLength * Math.sin(qAng), 'Anchor Query q', C.blue, 'left');
       drawBadge(ctx, cx + dLen * Math.cos(posAng), cy - dLen * Math.sin(posAng) - 16, `Positive d⁺ (|d|=${mag.toFixed(1)})`, C.green);
-      drawBadge(ctx, cx + r * Math.cos(negAng) - 10, cy - r * Math.sin(negAng) - 14, 'Hard Negative d⁻', C.red);
+      drawBadge(ctx, cx + unitLength * Math.cos(negAng) - 10, cy - unitLength * Math.sin(negAng) - 14, 'Hard Negative d⁻', C.red);
 
       const cosPos = Math.cos(qAng - posAng);
       const cosNeg = Math.cos(qAng - negAng);
@@ -1322,7 +1325,7 @@
     if (scene.mode === 'lora_nf4') {
       const rank = k1;
       const alpha = k2;
-      const showNF4 = !tog;
+      const showNF4 = tog;
 
       const d = 1024;
       const baseParams = d * d;
@@ -1386,7 +1389,7 @@
           const px = nx + ((z + 2.8) / 5.6) * nw;
           ctx.beginPath(); ctx.moveTo(px, ny); ctx.lineTo(px, ny - Math.exp(-0.5 * z * z) * nh); ctx.stroke();
         });
-        drawBadge(ctx, nx + nw / 2, 24, 'NF4 Quantiles: Dense Precision Near 0', C.green);
+        drawBadge(ctx, nx + nw / 2, 24, 'Illustrative low-bit bins', C.green);
       }
 
       telemetryEl.innerHTML = `
@@ -1534,7 +1537,7 @@
     if (scene.mode === 'eval_calibration') {
       const tempCal = k1;
       const nSamples = k2;
-      const showCI = !tog;
+      const showCI = tog;
 
       const padL = 56, padT = 30, ph = h - 72, pw = w * 0.44;
       ctx.strokeStyle = C.axis;
@@ -1548,63 +1551,43 @@
       ctx.beginPath(); ctx.moveTo(padL, padT + ph); ctx.lineTo(padL + pw, padT); ctx.stroke();
       ctx.restore();
 
-      // Model calibration curve (bows below diagonal when tempCal < 1.3, aligns near 1.5)
-      const miscal = (1.5 - tempCal) * 0.35;
+      // Synthetic bins: observed frequencies stay fixed; temperature changes stated confidence.
+      const rawConfidence = [0.1, 0.3, 0.5, 0.7, 0.9];
+      const observed = [0.05, 0.15, 0.32, 0.55, 0.76];
+      const confidence = rawConfidence.map(p => 1 / (1 + Math.exp(-Math.log(p / (1-p)) / tempCal)));
+      const ece = confidence.reduce((sum,p,i)=>sum+Math.abs(p-observed[i]),0) / confidence.length;
       ctx.strokeStyle = C.blue;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      for (let i = 0; i <= 40; i++) {
-        const u = i / 40;
-        const acc = Math.max(0, Math.min(1, u - miscal * u * (1 - u) * 2.2));
-        const px = padL + u * pw;
-        const py = padT + ph - acc * ph;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
+      confidence.forEach((p,i)=>{
+        const px=padL+p*pw, py=padT+ph-observed[i]*ph;
+        if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      });
       ctx.stroke();
-      drawBadge(ctx, padL + pw * 0.5, 20, `Reliability Diagram (ECE ≈ ${(Math.abs(miscal) * 18).toFixed(1)}%)`, C.blue);
+      confidence.forEach((p,i)=>drawDot(ctx,padL+p*pw,padT+ph-observed[i]*ph,4,C.yellow));
+      drawBadge(ctx,padL+pw*0.5,20,`Synthetic bins: ECE ${(100*ece).toFixed(1)}%`,C.blue);
 
-      // Right: NoteEchoes 96.3% Exact Match Wilson 95% CI & Ragas Triad
-      const pHat = 0.963;
-      const se = Math.sqrt((pHat * (1 - pHat)) / nSamples);
-      const ciHalf = 1.96 * se * 100;
-      const rx = w * 0.56, rw = w * 0.38;
-      drawBadge(ctx, rx + rw * 0.5, 20, `Wilson 95% CI (N=${nSamples}): 96.3% ± ${ciHalf.toFixed(2)}%`, C.green);
-
-      const triad = [
-        ['Schema Validity (FSM)', 1.00, C.green],
-        ['Action-Field Exact Match', 0.963, C.blue],
-        ['Ragas Faithfulness', 0.94, C.yellow]
-      ];
-      triad.forEach(([name, val, col], idx) => {
-        const y = 70 + idx * 66;
-        ctx.fillStyle = C.white;
-        ctx.font = '600 12px system-ui, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`${name}: ${(val * 100).toFixed(1)}%`, rx, y - 8);
-        ctx.fillStyle = 'rgba(30,41,59,0.8)';
-        ctx.fillRect(rx, y, rw, 22);
-        ctx.fillStyle = col;
-        ctx.fillRect(rx, y, rw * val, 22);
-        if (showCI && idx === 1) {
-          const cxBar = rx + rw * val;
-          const errPx = (ciHalf / 100) * rw * 2.5;
-          ctx.strokeStyle = C.white;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(cxBar - errPx, y + 11);
-          ctx.lineTo(cxBar + errPx, y + 11);
-          ctx.stroke();
+      // Separate success-count illustration: use the standard error explained in Lesson 21.
+      const successes=Math.round(nSamples*0.75),pHat=successes/nSamples;
+      const se=Math.sqrt(pHat*(1-pHat)/nSamples);
+      const rx=w*0.56,rw=w*0.38;
+      drawBadge(ctx,rx+rw*0.5,20,`Synthetic count: ${successes} / ${nSamples}`,C.green);
+      const bars=[['Success fraction',pHat,C.blue],['Error fraction',1-pHat,C.orange],['Approx. standard error',se,C.green]];
+      bars.forEach(([name,val,col],idx)=>{
+        const y=70+idx*66;
+        ctx.fillStyle=C.white;ctx.font='600 12px system-ui, sans-serif';ctx.textAlign='left';
+        ctx.fillText(`${name}: ${(val*100).toFixed(1)}%`,rx,y-8);
+        ctx.fillStyle='rgba(30,41,59,0.8)';ctx.fillRect(rx,y,rw,22);
+        ctx.fillStyle=col;ctx.fillRect(rx,y,rw*val,22);
+        if(showCI&&idx===0){
+          ctx.strokeStyle=C.white;ctx.lineWidth=2;ctx.beginPath();
+          ctx.moveTo(rx+rw*Math.max(0,pHat-se),y+11);ctx.lineTo(rx+rw*Math.min(1,pHat+se),y+11);ctx.stroke();
         }
       });
+      ctx.fillStyle=C.muted;ctx.font='11px system-ui, sans-serif';ctx.textAlign='center';
+      ctx.fillText('Stated confidence →',padL+pw*0.5,padT+ph+28);
+      telemetryEl.innerHTML=`<div class="b1b-metrics"><span><b>Synthetic counts:</b> ${successes}/${nSamples}</span><span><b>Observed success:</b> ${(pHat*100).toFixed(1)}%</span><span><b>Approximate standard error:</b> ${(se*100).toFixed(2)} percentage points</span><span><b>Mean confidence/correctness gap in five equal-weight synthetic bins:</b> ${(ece*100).toFixed(2)} percentage points</span><span>Teaching data, not model measurements. One standard error is not a confidence interval.</span></div>`;
 
-      telemetryEl.innerHTML = `
-        <div class="b1b-metrics">
-          <span><b>Eval Cases N:</b> <code>${nSamples}</code></span>
-          <span><b>Exact Field Match:</b> <code style="color:${C.blue}">96.3% (±${ciHalf.toFixed(2)}%)</code></span>
-          <span><b>Schema Validity:</b> <code style="color:${C.green}">100.0%</code></span>
-          <span><b>Expected Calib Error:</b> <code>${(Math.abs(miscal) * 18).toFixed(1)}%</code></span>
-        </div>
-      `;
       return;
     }
 
@@ -1670,7 +1653,7 @@
 
       telemetryEl.innerHTML = `
         <div class="b1b-metrics">
-          <span><b>Accuracy:</b> <code style="color:${C.green}">${(curVals[0] * 100).toFixed(0)}%</code></span>
+          <span><b>Illustrative accuracy score:</b> <code style="color:${C.green}">${(curVals[0] * 100).toFixed(0)}%</code></span>
           <span><b>Speed Score:</b> <code style="color:${C.yellow}">${(curVals[1] * 100).toFixed(0)}%</code></span>
           <span><b>RAM Efficiency:</b> <code>${(curVals[2] * 100).toFixed(0)}%</code></span>
           <span><b>Groundedness:</b> <code style="color:${C.blue}">${(curVals[3] * 100).toFixed(0)}%</code></span>
@@ -1695,9 +1678,9 @@
     }
 
     // Traveling signal pulse
-    const segFloat = t * (xs.length - 1);
+    const segFloat = t * xs.length;
     const segIdx = Math.min(xs.length - 2, Math.floor(segFloat));
-    const segFrac = segFloat - segIdx;
+    const segFrac = Math.min(1, segFloat - segIdx);
     const pulseX = xs[segIdx] + (xs[segIdx + 1] - xs[segIdx]) * segFrac;
     drawDot(ctx, pulseX, cy, 7.5, C.yellow, true);
 
@@ -1724,78 +1707,84 @@
       ctx.fillText(name.slice(0, 14), xs[i], cy + 11);
     });
 
-    // Bottom half: Dynamic Mathematical Response Curve / Vector Projection controlled by k1, k2, and toggle
-    const plotY = h * 0.86, plotH = h * 0.30, plotL = w * 0.12, plotW = w * 0.76;
-    ctx.strokeStyle = C.axis;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(plotL, plotY - plotH);
-    ctx.lineTo(plotL, plotY);
-    ctx.lineTo(plotL + plotW, plotY);
-    ctx.stroke();
-
-    const normK1 = (k1 - scene.knobs[0].min) / Math.max(1e-6, scene.knobs[0].max - scene.knobs[0].min);
-    const normK2 = (k2 - scene.knobs[1].min) / Math.max(1e-6, scene.knobs[1].max - scene.knobs[1].min);
-
-    ctx.save();
-    ctx.strokeStyle = tog ? C.red : C.blue;
-    ctx.lineWidth = 2.8;
-    ctx.shadowColor = tog ? C.red : C.blue;
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    for (let i = 0; i <= 90; i++) {
-      const u = i / 90;
-      const px = plotL + u * plotW;
-      const wave = Math.sin(u * Math.PI * (1.5 + normK1 * 3.5) + t * Math.PI * 2) * (0.25 + 0.45 * normK2);
-      const trend = (1 - Math.exp(-u * (1.5 + normK1 * 3))) * (tog ? 0.45 : 0.82);
-      const py = plotY - Math.max(0.05, Math.min(0.95, 0.5 * trend + 0.35 + wave * 0.35)) * plotH;
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    // Explain the selected stage. This walkthrough computes no quality metric.
+    const active = Math.min(steps.length - 1, Math.floor(t * steps.length));
+    const [stageName, detail] = steps[active];
+    ctx.fillStyle = C.white;
+    ctx.textAlign = 'left';
+    ctx.font = '700 14px system-ui, sans-serif';
+    ctx.fillText(`${active + 1}. ${stageName}`, 34, h * 0.66);
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillStyle = C.muted;
+    const words = detail.split(/\s+/);
+    let line = '', row = 0;
+    for (const word of words) {
+      const candidate = line ? line + ' ' + word : word;
+      if (ctx.measureText(candidate).width > w - 68 && line) {
+        ctx.fillText(line, 34, h * 0.66 + 25 + row * 19);
+        line = word;
+        row++;
+      } else line = candidate;
     }
-    ctx.stroke();
-    ctx.restore();
+    if (line) ctx.fillText(line, 34, h * 0.66 + 25 + row * 19);
+    drawBadge(ctx, w * 0.5, 21, 'Concept walkthrough: the marker shows reading order', C.blue);
+    const stageInput = telemetryEl.closest('.b1b-theater')?.querySelector('[data-b1b-knob="k1"]');
+    const stageLabel = telemetryEl.closest('.b1b-theater')?.querySelector('[data-b1b-val="k1"]');
+    if (stageInput) stageInput.value = active + 1;
+    if (stageLabel) stageLabel.textContent = active + 1;
+    telemetryEl.innerHTML = `<div class="b1b-metrics"><span><b>Highlighted stage:</b> ${active + 1} of ${steps.length}: ${esc(stageName)}</span><span><b>Meaning:</b> ${esc(detail)}</span><span>Conceptual flow only; no model, service or benchmark is running.</span></div>`;
 
-    const metricScore = ((0.62 + 0.31 * normK1 - (tog ? 0.22 : 0.0) + 0.06 * normK2) * 100).toFixed(1);
-    drawBadge(ctx, w * 0.5, 20, `${scene.title} · Live Response = ${metricScore}%`, tog ? C.red : C.green);
-
-    telemetryEl.innerHTML = `
-      <div class="b1b-metrics">
-        <span><b>${esc(scene.knobs[0].label)}:</b> <code>${k1}</code></span>
-        <span><b>${esc(scene.knobs[1].label)}:</b> <code>${k2}</code></span>
-        <span><b>Mode State:</b> <code style="color:${tog ? C.red : C.green}">${tog ? 'Perturbed / Failure Test' : 'Nominal / Verified'}</code></span>
-        <span><b>Observed Signal:</b> <code style="color:${C.yellow}">${metricScore}%</code></span>
-      </div>
-    `;
   }
 
   // ========================================================================
   // HTML TEMPLATE & INTERACTIVE MOUNTING FOR 3B1B THEATER
   // ========================================================================
+  function isFlowScene(scene) {
+    return !['gradient','boundary','linear2d','softmax','attention','rope_kv','contrastive','roofline','lora_nf4','markov','manifold','eval_calibration','radar_knobs'].includes(scene.mode);
+  }
+  function visualControls(scene) {
+    return isFlowScene(scene) ? [{id:'k1',label:'Inspect walkthrough stage',min:1,max:4,step:1,val:1}] : scene.knobs;
+  }
+  // These diagrams respond to parameters, not a time axis. Do not offer dead playback controls.
+  function hasTimeline(scene) {
+    return !['softmax', 'contrastive', 'eval_calibration', 'roofline', 'lora_nf4', 'radar_knobs'].includes(scene.mode);
+  }
+  window.getLessonVisualKind = day => hasTimeline(SCENES[Number(day)-1] || SCENES[0]) ? 'animation' : 'diagram';
+
   window.render3B1BTheaterHTML = (day) => {
     const d = Math.min(30, Math.max(1, Number(day) || 1));
     const scene = SCENES[d - 1];
     if (!scene) return '';
+    const timeline = hasTimeline(scene);
+    const flow = isFlowScene(scene);
+    const guide = window.LESSON_GUIDES?.[d-1];
+    const title = flow ? (guide?.title || scene.title) + ' · concept walkthrough' : scene.title;
+    const equation = flow ? (guide?.steps || []).map(x => x[0]).join(' → ') : scene.equation;
+    const controls = visualControls(scene);
+    const meaning = window.BEGINNER?.[d-1]?.meaning;
 
     return `
       <div class="b1b-theater" data-b1b-day="${d}">
         <div class="b1b-header">
           <div>
-            <span class="b1b-eyebrow">🎬 3BLUE1BROWN VISUAL INTUITION · DAY ${String(d).padStart(2, '0')}</span>
-            <h3 class="b1b-title">${esc(scene.title)}</h3>
+            <span class="b1b-eyebrow">🎬 3BLUE1BROWN-INSPIRED ${timeline ? 'ANIMATION' : 'INTERACTIVE DIAGRAM'} · DAY ${String(d).padStart(2, '0')}</span>
+            <h3 class="b1b-title">${esc(title)}</h3>
           </div>
           <div class="b1b-playback">
-            <button type="button" class="b1b-btn b1b-play" data-b1b-action="play" aria-pressed="true">⏸ Pause</button>
-            <button type="button" class="b1b-btn" data-b1b-action="step">⏭ Step</button>
+            ${timeline ? `<button type="button" class="b1b-btn b1b-play" data-b1b-action="play" aria-pressed="true">⏸ Pause</button>
+            <button type="button" class="b1b-btn" data-b1b-action="step">⏭ Step</button>` : '<span class="b1b-static-help">Change a slider to explore this diagram.</span>'}
             <button type="button" class="b1b-btn" data-b1b-action="reset">↺ Reset</button>
           </div>
         </div>
 
         <div class="b1b-formula-bar">
-          <span class="b1b-formula-tag">CORE EQUATION</span>
-          <code>${esc(scene.equation)}</code>
+          <span class="b1b-formula-tag">${flow ? 'CONCEPT SEQUENCE' : 'CORE EQUATION'}</span>
+          <code>${esc(equation)}</code>
         </div>
 
+        ${meaning ? `<p class="b1b-reading-guide"><b>Read this picture:</b> ${esc(meaning.watch)}</p>` : ''}
         <div class="b1b-canvas-wrap">
-          <canvas class="b1b-canvas" width="680" height="310" aria-label="${esc(scene.title)} interactive visualization"></canvas>
+          <canvas class="b1b-canvas" width="680" height="310" aria-label="${esc(title)} interactive visualization"></canvas>
           <div class="b1b-legend">
             <span><i style="background:#58C4DD"></i> Input / Function</span>
             <span><i style="background:#FFFF00"></i> Gradient / Active Weight</span>
@@ -1805,27 +1794,28 @@
         </div>
 
         <div class="b1b-controls">
-          ${scene.knobs.map(k => `
+          ${controls.map(k => `
             <label class="b1b-knob">
               <span>${esc(k.label)}: <b data-b1b-val="${k.id}">${k.val}</b></span>
               <input type="range" data-b1b-knob="${k.id}" min="${k.min}" max="${k.max}" step="${k.step}" value="${k.val}">
             </label>
           `).join('')}
-          <button type="button" class="b1b-toggle-btn" data-b1b-toggle aria-pressed="false">
+          ${flow ? '' : `<button type="button" class="b1b-toggle-btn" data-b1b-toggle aria-pressed="false">
             ⚡ ${esc(scene.toggle)}
-          </button>
+          </button>`}
         </div>
 
         <div class="b1b-telemetry" aria-live="polite"></div>
 
         <div class="b1b-callouts">
           <div class="b1b-callout b1b-intuition">
-            <strong>💡 Geometric Intuition (How to see the math):</strong>
-            <p>${esc(scene.intuition)}</p>
+            <strong>${meaning ? 'Why we need this:' : 'Geometric intuition:'}</strong>
+            <p>${esc(meaning?.why || scene.intuition)}</p>
+            ${meaning ? `<strong>What changes, and what it means:</strong><p>${esc(meaning.change)}</p>` : ''}
           </div>
           <div class="b1b-callout b1b-resume">
-            <strong>🎯 Your Resume & Interview Connection:</strong>
-            <p>${esc(scene.resumeTie)}</p>
+            <strong>${meaning ? 'A project illustration:' : 'Project connection:'}</strong>
+            <p>${esc(meaning?.project || scene.resumeTie)}</p>
           </div>
         </div>
       </div>
@@ -1838,6 +1828,8 @@
 
     const day = Number(el.dataset.b1bDay) || 1;
     const scene = SCENES[day - 1] || SCENES[0];
+    const controls = visualControls(scene);
+    const flow = isFlowScene(scene);
     const canvas = el.querySelector('.b1b-canvas');
     const telemetryEl = el.querySelector('.b1b-telemetry');
     const playBtn = el.querySelector('[data-b1b-action="play"]');
@@ -1846,11 +1838,11 @@
     const toggleBtn = el.querySelector('[data-b1b-toggle]');
 
     const state = {
-      k1: scene.knobs[0].val,
-      k2: scene.knobs[1].val,
+      k1: controls[0].val,
+      k2: controls[1]?.val || 0,
       toggle: false,
-      playing: true,
-      animProgress: 0.35
+      playing: hasTimeline(scene),
+      animProgress: 0
     };
 
     let lastTs = performance.now();
@@ -1866,7 +1858,7 @@
 
     function tick(now) {
       if (!el.isConnected) return;
-      const dt = Math.min(0.1, (now - lastTs) / 1000);
+      const dt = Math.max(0, Math.min(0.1, (now - lastTs) / 1000));
       lastTs = now;
       if (state.playing) {
         state.animProgress = (state.animProgress + dt * 0.22) % 1.0;
@@ -1879,6 +1871,11 @@
       input.addEventListener('input', () => {
         const id = input.dataset.b1bKnob;
         state[id] = Number(input.value);
+        if (flow) {
+          state.animProgress = (state.k1 - 1) / 4;
+          state.playing = false;
+          if (playBtn) {playBtn.setAttribute('aria-pressed','false');playBtn.textContent='▶ Animate';}
+        }
         const valEl = el.querySelector(`[data-b1b-val="${id}"]`);
         if (valEl) valEl.textContent = input.value;
         draw();
@@ -1909,34 +1906,35 @@
           playBtn.setAttribute('aria-pressed', 'false');
           playBtn.textContent = '▶ Animate';
         }
-        state.animProgress = (state.animProgress + 1 / 6) % 1.0;
+        const count = flow ? 4 : 6;
+        state.animProgress = ((Math.floor(state.animProgress * count + 1e-6) + 1) % count) / count;
         draw();
       });
     }
 
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        state.k1 = scene.knobs[0].val;
-        state.k2 = scene.knobs[1].val;
+        state.k1 = controls[0].val;
+        state.k2 = controls[1]?.val || 0;
         state.toggle = false;
-        state.animProgress = 0.35;
-        state.playing = true;
+        state.animProgress = 0;
+        state.playing = false;
         el.querySelectorAll('[data-b1b-knob]').forEach((inp, idx) => {
-          inp.value = scene.knobs[idx].val;
-          const vEl = el.querySelector(`[data-b1b-val="${scene.knobs[idx].id}"]`);
-          if (vEl) vEl.textContent = scene.knobs[idx].val;
+          inp.value = controls[idx].val;
+          const vEl = el.querySelector(`[data-b1b-val="${controls[idx].id}"]`);
+          if (vEl) vEl.textContent = controls[idx].val;
         });
         if (toggleBtn) toggleBtn.setAttribute('aria-pressed', 'false');
         if (playBtn) {
-          playBtn.setAttribute('aria-pressed', 'true');
-          playBtn.textContent = '⏸ Pause';
+          playBtn.setAttribute('aria-pressed', 'false');
+          playBtn.textContent = '▶ Animate';
         }
         draw();
       });
     }
 
     draw();
-    rafId = requestAnimationFrame(tick);
+    if (hasTimeline(scene)) rafId = requestAnimationFrame(tick);
   }
 
   window.hydrateAll3B1BTheaters = (root = document) => {

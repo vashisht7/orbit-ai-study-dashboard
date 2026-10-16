@@ -59,3 +59,11 @@ the concept, symbols, rule and derivation before a worked example. The dashboard
 and beginner reader put interactive practice after the lesson, and use specific
 recall questions. The beginner PDF matches this revision; earlier reference-book
 PDFs remain separate historical materials. Read beginner/manuscript.md offline.
+
+
+Meaning and visual revision: every day now includes why the idea is needed,
+what it changes, a labeled project illustration and instructions for reading
+the visual. A dedicated Lesson animation tab opens the current day directly;
+the gallery/job audit is separate. Concept walkthroughs no longer display
+invented response percentages. Static diagrams expose sliders rather than
+nonfunctional playback controls. The beginner PDF includes the expanded text.

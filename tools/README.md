@@ -34,3 +34,11 @@ It writes `output/pdf/AI_Engineering_First_Principles.pdf` and refreshes the
 existing `beginner/Beginner_AI_Engineering.pdf` download. The reader PDF is tracked for GitHub Pages; other PDFs remain ignored by
 Git. Regenerate and commit the reader PDF when publishing lesson changes. The optional PyTorch decoder is not run by the standard-library
 build and requires a separate PyTorch environment.
+
+
+Daily visual guidance is extracted from the manuscript's “Why we need this”,
+“What changes when you use it”, “A project connection” and “Read the visual”
+sections. Every visual uses that same explanation. Quantitative diagrams must
+calculate the stated quantity; conceptual flows must say they are walkthroughs
+and must not display invented outcome metrics. Time-driven visuals have playback
+controls; parameter-driven static diagrams have sliders and Reset.

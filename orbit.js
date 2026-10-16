@@ -528,7 +528,7 @@ const lensCalculations = {
   3: ['Softmax Confidence on Mobile', 'Softmax normalizes raw intent logits into probabilities. NoteEchoes enforces a confidence threshold (e.g. 0.75): if confidence is low, the app asks the user to clarify rather than scheduling a wrong reminder.', 'Try it: compare confidence between "Remind me tomorrow" and "Maybe remind me later".'],
   4: ['Why 0.6B Neural Beats N-Gram on Mobile', 'A count-based n-gram table storing 3-word combinations would explode to gigabytes without generalizing to synonyms. Qwen 0.6B compresses language representations into a 649MB package that understands paraphrasing.', 'Try it: test a phrasing with slang. A neural model generalizes; an n-gram model misses completely.'],
   5: ['Tokenizer Vocabulary in RAM', 'Qwen uses a 151,936-token vocabulary. The embedding matrix alone requires 151,936 × 1024 × 1 byte (INT8) ≈ 155.6 MB in Unified Memory. Token IDs are row indices, not semantic measurements.', 'Try it: count tokens in system instructions vs user text. Fixed system prompts consume context budget.'],
-  6: ['Why We Train Off-Device (Backprop RAM)', 'Inference only stores weights and KV-cache. Backpropagation requires caching all intermediate activation tensors across 28 layers (consuming ~3× inference RAM). We train QLoRA on Mac/Cloud and deploy inference-only on iOS.', 'Try it: calculate why backprop on 28 layers exceeds mobile 650MB budgets.'],
+  6: ['What training stores beyond prediction', 'Training needs gradients, optimizer state and intermediate activations in addition to model weights. Memory depends on architecture, precision, batch size, sequence length and checkpointing; there is no universal three-times multiplier or fixed iOS memory limit.', 'Trace the prediction, loss, backward pass and optimizer update. Identify the tensors each stage needs.'],
   7: ['Single-Stream Mobile vs Server Batching', 'Cloud vLLM batches 32+ requests to keep GPU tensor cores 100% compute-saturated. An iPhone runs B=1: execution is memory-bandwidth bound because weights must be read from RAM for each generated token.', 'Try it: check why increasing batch size improves throughput on servers but is irrelevant on a personal phone.'],
   8: ['Hardware Dispatch: ANE vs GPU', 'On Apple Silicon, MLX dispatches flexible attention layers to the GPU, while fixed-shape encoder operations (like Whisper ASR) can compile to the power-efficient Apple Neural Engine (ANE).', 'Try it: compare power draw: ANE uses ~1-2W vs GPU ~6-10W.'],
   9: ['Self-Attention & Context Mixing', 'Self-attention computes Query-Key dot products scaled by 1/√d_k to produce attention weights, which take a weighted sum of Values. The causal mask ensures token t only attends to positions ≤ t.', 'Try it: adjust an attention score in the interactive lab and watch information flow to the reminder action.'],
@@ -1248,6 +1248,20 @@ function showReading() {
   }
 
   if (mode === 'b1b') {
+    $('#reading').innerHTML = `
+      <p class="eyebrow">LESSON ${selected} · INTERACTIVE ANIMATION</p>
+      <h2>${esc(c.title)}</h2>
+      <p>${window.getLessonVisualKind(selected) === 'diagram' ? 'Change a slider and compare what changes. Use Reset to return to the initial settings.' : 'Watch the changing picture, pause it, then use Step and the sliders to connect it to the explanation.'}</p>
+      <p class="animation-origin">An original interactive animation inspired by 3Blue1Brown's visual teaching style.</p>
+      <button type="button" class="lesson-watch" id="animation-back">← Read the explanation and derivation</button>
+      ${window.render3B1BTheaterHTML(selected)}
+    `;
+    $('#animation-back').onclick = () => setLessonView('read');
+    window.hydrateAll3B1BTheaters($('#reading'));
+    return;
+  }
+
+  if (mode === 'audit') {
     $('#reading').innerHTML = window.renderJobReadinessAuditHTML ? window.renderJobReadinessAuditHTML(selected) : '';
     if (window.mountJobReadinessAuditEvents) {
       window.mountJobReadinessAuditEvents($('#reading'), d => {
@@ -1263,7 +1277,8 @@ function showReading() {
     $('#reading').innerHTML = `
       <p class="eyebrow">${esc(c.part.toUpperCase())} · LESSON ${selected}</p>
       <p class="notice">Concept → rule and derivation → worked example → practice → explain it.</p>
-      ${render(c.body)}
+      ${window.renderLessonContents(selected)}
+      ${window.renderLessonText(selected, render)}
       <h3>Practice after the explanation</h3>
       <div id="experiment"></div>
       ${window.renderLessonGuide(selected)}
@@ -1313,7 +1328,8 @@ function showReading() {
 }
 
 function show() {
-  let n = Number(location.hash.replace('#day-', ''));
+  const route = location.hash.match(/^#day-(\d+)(?:\/(animation|recall|lab|audit))?$/);
+  const n = route ? Number(route[1]) : NaN;
   selected = Number.isInteger(n) && n >= 1 && n <= 30 ? n : Math.min(30, Math.max(1, state.last || 1));
   const d = DAYS[selected - 1];
   const c = window.BEGINNER[selected - 1];
@@ -1415,12 +1431,21 @@ function show() {
   savedStepNotes.innerHTML='<summary>Notes you saved in the recent study view</summary>'+keptNotes.map(([key,note])=>'<h4>'+esc(noteLabels[key]||key)+'</h4><p style="white-space:pre-wrap">'+esc(note)+'</p>').join('');
   $('#next-day').disabled = selected === 30;
 
-  mode = 'read';
+  mode = ({animation:'b1b',recall:'recall',lab:'simulator',audit:'audit'})[route?.[2]] || 'read';
   buildMap();
   showReading();
   refreshProgress();
   save();
 }
+
+function setLessonView(view) {
+  mode = view;
+  const suffix = ({b1b:'/animation',recall:'/recall',simulator:'/lab',audit:'/audit'})[view] || '';
+  history.replaceState(null, '', '#day-' + selected + suffix);
+  showReading();
+  $('#workspace').scrollIntoView({block:'start'});
+}
+window.openLessonAnimation = () => setLessonView('b1b');
 
 function navigate(n) {
   if (n === selected) return;
@@ -1449,19 +1474,17 @@ $('#finish-reading').onclick = e => {
 };
 
 $('#next-day').onclick = () => navigate(selected + 1);
-$('#read-tab').onclick = () => { mode = 'read'; showReading(); };
-$('#interview-tab').onclick = () => { mode = 'recall'; showReading(); };
+$('#read-tab').onclick = () => setLessonView('read');
+$('#interview-tab').onclick = () => setLessonView('recall');
 if ($('#simulator-tab')) {
-  $('#simulator-tab').onclick = () => { mode = 'simulator'; showReading(); };
+  $('#simulator-tab').onclick = () => setLessonView('simulator');
 }
 if ($('#b1b-tab')) {
-  $('#b1b-tab').onclick = () => { mode = 'b1b'; showReading(); };
+  $('#b1b-tab').onclick = () => setLessonView('b1b');
 }
 if ($('#job-audit-pill')) {
   $('#job-audit-pill').onclick = () => {
-    mode = 'b1b';
-    showReading();
-    $('#reading').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    setLessonView('audit');
   };
 }
 $('#resume').onclick = () => navigate(DAYS.find(d => count(d.day) < taskKeys.length)?.day || 30);

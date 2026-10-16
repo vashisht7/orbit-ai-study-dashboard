@@ -21,9 +21,9 @@ const base=process.env.BASE_URL||'http://127.0.0.1:8765';
     const code=el.querySelector('pre');const experiment=el.querySelector('#experiment');
     const worked=[...el.querySelectorAll('h3')].find(h=>h.textContent.startsWith('Worked example:'));
     const before=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
-    return {concept:headings[0].startsWith('The concept:'),workedBeforeCode:before(worked,code),codeBeforePractice:before(code,experiment),mathErrors:el.querySelectorAll('.katex-error').length,formulaCount:el.querySelectorAll('.katex').length,rawBlocks:el.innerText.includes('BOOKBLOCK'),advancedClosed:!el.querySelector('.optional-visual')?.open};
+    return {concept:headings[0].startsWith('The concept:'),workedBeforeCode:before(worked,code),codeBeforePractice:before(code,experiment),mathErrors:el.querySelectorAll('.katex-error').length,formulaCount:el.querySelectorAll('.katex').length,rawBlocks:el.innerText.includes('BOOKBLOCK'),animationExposed:!!el.querySelector('.lesson-animation .b1b-canvas')&&!el.querySelector('.lesson-animation')?.closest('details')};
    });
-   assert.ok(checks.concept&&checks.workedBeforeCode&&checks.codeBeforePractice&&checks.advancedClosed,`${reader}${id} reading order`);
+   assert.ok(checks.concept&&checks.workedBeforeCode&&checks.codeBeforePractice&&checks.animationExposed,`${reader}${id} reading order`);
    assert.equal(checks.mathErrors,0,`${reader}${id} equations`);assert.equal(checks.rawBlocks,false);
    if(!standalone){
     assert.equal(await page.locator('.quiz-opt-btn').count(),3);
@@ -42,9 +42,18 @@ const base=process.env.BASE_URL||'http://127.0.0.1:8765';
  assert.equal(await page.locator('.quiz-opt-btn:disabled').count(),0);
  await page.locator('.quiz-opt-btn[data-correct="true"]').click();
  assert.equal(await page.locator('.quiz-opt-btn:disabled').count(),3);
- // Open the formerly front-loaded visual and ensure it still mounts.
- await page.locator('.optional-visual>summary').click();
- assert.equal(await page.locator('.optional-visual canvas').count()>0,true);
+ // The day's animation is one click away, independently of the audit.
+ await page.locator('[data-open-lesson-animation]').click();
+ assert.match(page.url(),/#day-6\/animation$/);
+ assert.equal(await page.locator('#job-readiness-hub').count(),0);
+ assert.equal(await page.locator('.b1b-theater[data-b1b-day="6"] canvas').isVisible(),true);
+ await page.locator('[data-b1b-action="reset"]').click();
+ assert.match(await page.locator('.b1b-telemetry').innerText(),/Step 0/);
+ await page.locator('[data-b1b-action="step"]').click();
+ assert.match(await page.locator('.b1b-telemetry').innerText(),/Step 1/);
+ await page.locator('#animation-back').click();
+ await page.locator('#job-audit-pill').click();
+ assert.equal(await page.locator('#job-readiness-hub').isVisible(),true);
  const dir=path.resolve(__dirname,'../tmp/lesson-rewrite');fs.mkdirSync(dir,{recursive:true});
  for(const width of [390,1440]){
   await page.setViewportSize({width,height:1000});
@@ -58,6 +67,6 @@ const base=process.env.BASE_URL||'http://127.0.0.1:8765';
  }
  assert.deepEqual(errors,[]);
  fs.writeFileSync(path.resolve(__dirname,'../beginner/browser-checks.json'),JSON.stringify({passed:true,views:report.length,equations:math.length,quizInteraction:true,mobileAndDesktop:true,lessons:report},null,2)+'\n');
- console.log('PASS: 60 daily lesson views, concept/derivation/example/practice order, strict math rendering, 30 specific quizzes, quiz interaction, optional visual, and mobile/desktop overflow.');
+ console.log('PASS: 60 daily lesson views, concept/derivation/example/practice order, strict math rendering, 30 specific quizzes, quiz interaction, direct animation access, step/reset, separate audit, and mobile/desktop overflow.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

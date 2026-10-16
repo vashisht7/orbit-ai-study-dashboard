@@ -38,7 +38,12 @@ def build():
         options = [{'t': answer, 'c': True}] + [{'t': x, 'c': False} for x in wrong]
         offset = i % len(options)
         options = options[offset:] + options[:offset]
-        item.update(body=body, output=output, quiz={
+        meaning = {}
+        for key, heading in [('why', 'Why we need this'), ('change', 'What changes when you use it'), ('project', 'A project connection'), ('watch', 'Read the visual')]:
+            match = re.search(r'^### ' + re.escape(heading) + r'\n(.*?)(?=^### |\Z)', body, re.M | re.S)
+            assert match and match[1].strip(), (item['id'], heading)
+            meaning[key] = match[1].strip()
+        item.update(body=body, output=output, meaning=meaning, quiz={
             'q': q, 'options': options,
             'hint': answer,
         })

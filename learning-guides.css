@@ -389,3 +389,22 @@
   color: #58C4DD;
   font-weight: 600;
 }
+
+/* Keep the explanation and each day's animation directly discoverable. */
+.lesson-contents{padding:20px;margin:18px 0 30px;border:1px solid #3e6275;border-radius:12px;background:#112334;color:#dce7f1;min-width:0}
+.lesson-contents p{margin:0 0 12px!important}
+.lesson-watch{display:inline-block;background:#174b56;color:#d7fff6;border:1px solid #79e0ca;border-radius:8px;padding:10px 15px;font:inherit;font-size:15px;line-height:1.4;cursor:pointer;max-width:100%;white-space:normal}
+.lesson-contents-help,.animation-origin{font-size:14px;color:#b2c5d6;margin-top:12px!important}
+.lesson-contents ol{margin:10px 0 0;padding-left:22px!important}
+.lesson-contents li{margin:6px 0!important}
+.lesson-contents li button{background:none;border:0;color:#a8e8df;padding:3px 0;text-align:left;min-height:32px;font:inherit;font-size:14px;line-height:1.45;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.lesson-section-heading,.lesson-animation{scroll-margin-top:180px}
+.lesson-animation{display:block;margin-top:28px;min-width:0}
+.lesson-contents button:focus-visible,.lesson-watch:focus-visible{outline:3px solid #facc15;outline-offset:3px}
+@media(max-width:600px){.lesson-contents{padding:16px}.lesson-section-heading,.lesson-animation{scroll-margin-top:210px}}
+@media print{.lesson-contents,.lesson-animation,.animation-origin{display:none}}
+.b1b-reading-guide{font-size:14px;line-height:1.7;padding:14px 16px;margin:16px 0;color:#d5e9ed;background:#11232d;border-left:3px solid #79e0ca;border-radius:5px}
+.b1b-static-help{font-size:12px;line-height:1.4;color:#b2c5d6;max-width:180px}
+#workspace{scroll-margin-top:140px}
+@media(max-width:600px){#workspace{scroll-margin-top:210px}}
+@media(max-width:760px){.b1b-canvas-wrap{overflow-x:auto}.b1b-canvas{min-width:620px}.b1b-legend{min-width:620px}}
