@@ -655,11 +655,7 @@ function refreshProgress() {
     }
   });
 
-  // Finish Reading Button
-  const isReadChecked = !!dayState().checks.reading;
-  $('#finish-reading').innerHTML = isReadChecked
-    ? '<span class="check-icon">✓</span> Reading complete (+100 XP)'
-    : '<span class="check-icon">✓</span> I can explain this lesson (+100 XP)';
+  updateReadingCompletion();
 
   // Checklist Checkboxes
   $$('.task').forEach(t => {
@@ -769,6 +765,10 @@ function initReadingScroll() {
     const progress = Math.min(1, Math.max(0, (windowH - rect.top) / (totalH + windowH * 0.5)));
     if (progressBar) progressBar.style.width = `${Math.round(progress * 100)}%`;
 
+    if (mode === 'localai') {
+      if (readtimeTicker) readtimeTicker.textContent = '⏱️ 15–25 min with practice';
+      return;
+    }
     if (readtimeTicker && window.BEGINNER[selected - 1]) {
       const totalWords = window.BEGINNER[selected - 1].body.split(/\s+/).length;
       const wordsLeft = Math.ceil(totalWords * (1 - progress));
@@ -1235,12 +1235,59 @@ function mountSimulatorEvents() {
   }
 }
 
+function updateReadingCompletion() {
+  const local = mode === 'localai';
+  const done = !!dayState().checks[local ? 'localai' : 'reading'];
+  $('#finish-reading').textContent = local
+    ? (done ? '✓ Local AI complete (+70 XP)' : '✓ I can explain this Local AI concept (+70 XP)')
+    : (done ? '✓ Reading complete (+100 XP)' : '✓ I can explain this lesson (+100 XP)');
+}
+
+function renderLocalAILesson() {
+  const lesson = window.LOCAL_AI_LESSONS[selected - 1];
+  $('#reading').innerHTML = `
+    <article class="local-ai-lesson" data-local-ai-day="${selected}">
+      <p class="eyebrow">LOCAL AI · DAY ${selected} OF 30 · 15–25 MINUTES</p>
+      <h2>${esc(lesson.title)}</h2>
+      <p class="notice">Learn the mechanism → work through the example → inspect your own project → explain the result.</p>
+      <p class="quiet">This expanded companion track adds material beyond the main reading. Your existing completion marks are preserved; they do not mean you have already read these new sections. Examples are illustrative unless you supply measured results.</p>
+      <nav class="local-ai-nav" aria-label="Local AI lesson navigation">
+        <button type="button" id="local-ai-back">← Main lesson ${selected}</button>
+        <a href="local-ai/guide.md" download>Download all 30 Local AI lessons</a>
+      </nav>
+      <details class="local-ai-map"><summary>Find a topic · all 30 Local AI lessons</summary>
+        <ol>${window.LOCAL_AI_LESSONS.map(l=>`<li><a href="#day-${l.day}/local-ai" ${l.day===selected?'aria-current="page"':''}>${esc(l.title)}</a></li>`).join('')}</ol>
+      </details>
+      <div class="local-ai-body">${render(lesson.body)}</div>
+      <h3>Check your understanding</h3>
+      <p>${esc(lesson.question)}</p>
+      <details class="local-ai-answer"><summary>Reveal the explanation after you try</summary><p>${esc(lesson.answer)}</p></details>
+      <h3>Read further</h3><ul>${lesson.sources.map(([title,url])=>`<li><a href="${url}" target="_blank" rel="noopener">${esc(title)}</a></li>`).join('')}</ul>
+      <p>Use your daily notes to record: what changed, why it changed, and what you measured. Project experiments run in your own environment; this page does not execute MLX or train a model.</p>
+      <nav class="local-ai-nav" aria-label="Continue Local AI study">
+        ${selected>1?`<a href="#day-${selected-1}/local-ai">← Previous Local AI lesson</a>`:''}
+        ${selected<30?`<a href="#day-${selected+1}/local-ai">Next Local AI lesson →</a>`:''}
+      </nav>
+    </article>`;
+  $('#local-ai-back').onclick = () => setLessonView('read');
+}
+
 function showReading() {
+  const localView = mode === 'localai';
+  updateReadingCompletion();
+  $('#readtime-left').textContent = localView ? '⏱️ 15–25 min with practice' : `⏱️ ~${Math.ceil(window.BEGINNER[selected - 1].body.split(/\s+/).length / 160)} min reading`;
   const c = window.BEGINNER[selected - 1];
   $('#read-tab').setAttribute('aria-pressed', mode === 'read');
   $('#interview-tab').setAttribute('aria-pressed', mode === 'recall');
   if ($('#simulator-tab')) $('#simulator-tab').setAttribute('aria-pressed', mode === 'simulator');
   if ($('#b1b-tab')) $('#b1b-tab').setAttribute('aria-pressed', mode === 'b1b');
+
+  if ($('#localai-tab')) $('#localai-tab').setAttribute('aria-pressed', mode === 'localai');
+
+  if (mode === 'localai') {
+    renderLocalAILesson();
+    return;
+  }
 
   if (mode === 'simulator') {
     renderNoteEchoesSimulatorView();
@@ -1328,7 +1375,7 @@ function showReading() {
 }
 
 function show() {
-  const route = location.hash.match(/^#day-(\d+)(?:\/(animation|recall|lab|audit))?$/);
+  const route = location.hash.match(/^#day-(\d+)(?:\/(animation|recall|lab|audit|local-ai))?$/);
   const n = route ? Number(route[1]) : NaN;
   selected = Number.isInteger(n) && n >= 1 && n <= 30 ? n : Math.min(30, Math.max(1, state.last || 1));
   const d = DAYS[selected - 1];
@@ -1349,17 +1396,15 @@ function show() {
           <span class="spotlight-tag">⚡ EVERYDAY LOCAL AI</span>
           <span class="xp-chip">+70 XP</span>
         </div>
-        <p class="spotlight-text">${esc(d.local_ai || 'Master today\'s on-device mechanism, Apple Silicon memory constraints, and architecture.')}</p>
-        <button class="spotlight-btn" id="spotlight-open-sim">Inspect in NoteEchoes Lab ⚡</button>
+        <p class="spotlight-text"><strong>Day ${selected}: ${esc(window.LOCAL_AI_LESSONS[selected - 1].title)}</strong><br>${esc(window.LOCAL_AI_LESSONS[selected - 1].why)}</p>
+        <button class="spotlight-btn" id="spotlight-open-sim">Read today’s Local AI lesson →</button>
       </div>
 
     `;
     const openSimBtn = $('#spotlight-open-sim');
     if (openSimBtn) {
       openSimBtn.onclick = () => {
-        mode = 'simulator';
-        showReading();
-        $('#reading').scrollIntoView({ block: 'start', behavior: 'smooth' });
+        setLessonView('localai');
       };
     }
   }
@@ -1367,7 +1412,7 @@ function show() {
   const codingRoute = window.CODING_ROUTES[selected];
   const tasks = [
     ['reading', 'AI Reading & Comprehension', '45 min', 'Read carefully, test the parameter experiment, and work through numbers.', '#reading', 'Read on this page', 100],
-    ['localai', 'Everyday Local AI Concept', '15 min', d.local_ai || 'Master on-device model inference, Apple Silicon UMA memory, and sandbox boundary.', '#reading', 'Open NoteEchoes Lab ⚡', 70],
+    ['localai', 'Local AI · Day ' + selected, '15–25 min', window.LOCAL_AI_LESSONS[selected - 1].title, '#day-' + selected + '/local-ai', 'Read today’s Local AI lesson →', 70],
     ['coding', 'LeetCode / Algorithmic Coding', '60 min', d.coding, codingRoute.url, 'Open ' + codingRoute.provider + (codingRoute.provider === 'Hello Interview' ? ' ↗' : ' →'), 120],
     ['design', 'System Design Practice', '45 min', d.label, d.design, 'Open design lesson ↗', 100],
     ['lab', 'Hands-on Python Lab', '20 min', 'Predict the output. Run this lesson’s Python lab script. Change one setting.', 'beginner/labs/' + c.lab, 'Download Python lab ↓', 80],
@@ -1407,9 +1452,7 @@ function show() {
   if (localAiTask) {
     localAiTask.onclick = e => {
       e.preventDefault();
-      mode = 'simulator';
-      showReading();
-      $('#reading').scrollIntoView({ block: 'start', behavior: 'smooth' });
+      setLessonView('localai');
     };
   }
 
@@ -1431,7 +1474,7 @@ function show() {
   savedStepNotes.innerHTML='<summary>Notes you saved in the recent study view</summary>'+keptNotes.map(([key,note])=>'<h4>'+esc(noteLabels[key]||key)+'</h4><p style="white-space:pre-wrap">'+esc(note)+'</p>').join('');
   $('#next-day').disabled = selected === 30;
 
-  mode = ({animation:'b1b',recall:'recall',lab:'simulator',audit:'audit'})[route?.[2]] || 'read';
+  mode = ({animation:'b1b',recall:'recall',lab:'simulator',audit:'audit','local-ai':'localai'})[route?.[2]] || 'read';
   buildMap();
   showReading();
   refreshProgress();
@@ -1440,7 +1483,7 @@ function show() {
 
 function setLessonView(view) {
   mode = view;
-  const suffix = ({b1b:'/animation',recall:'/recall',simulator:'/lab',audit:'/audit'})[view] || '';
+  const suffix = ({b1b:'/animation',recall:'/recall',simulator:'/lab',audit:'/audit',localai:'/local-ai'})[view] || '';
   history.replaceState(null, '', '#day-' + selected + suffix);
   showReading();
   $('#workspace').scrollIntoView({block:'start'});
@@ -1469,12 +1512,13 @@ $('#notes').oninput = () => {
 };
 
 $('#finish-reading').onclick = e => {
-  setCheck('reading', true, e.currentTarget);
-  toast('Reading marked complete! Try the lab script and test your parameter predictions.');
+  setCheck(mode === 'localai' ? 'localai' : 'reading', true, e.currentTarget);
+  toast(mode === 'localai' ? 'Local AI concept marked complete. Save your explanation and project observation in your daily notes.' : 'Reading marked complete! Try the lab script and test your parameter predictions.');
 };
 
 $('#next-day').onclick = () => navigate(selected + 1);
 $('#read-tab').onclick = () => setLessonView('read');
+$('#localai-tab').onclick = () => setLessonView('localai');
 $('#interview-tab').onclick = () => setLessonView('recall');
 if ($('#simulator-tab')) {
   $('#simulator-tab').onclick = () => setLessonView('simulator');

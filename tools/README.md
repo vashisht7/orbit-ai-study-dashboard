@@ -42,3 +42,14 @@ sections. Every visual uses that same explanation. Quantitative diagrams must
 calculate the stated quantity; conceptual flows must say they are walkthroughs
 and must not display invented outcome metrics. Time-driven visuals have playback
 controls; parameter-driven static diagrams have sliders and Reset.
+
+## Local AI companion track
+
+`local-ai/lessons.json` contains 30 distinct lessons. `tools/build_local_ai.cjs`
+adds explicit consequences and primary references, and emits `local-ai/course.js`
+and the downloadable `local-ai/guide.md`. It runs as part of the study build.
+The dashboard tab, daily spotlight and checklist all open `#day-N/local-ai`.
+The shared NoteEchoes simulator stays separately accessible as `#day-N/lab`.
+Local AI completion uses the existing `localai` progress key; no stored notes or
+old completion marks are cleared. The reader explicitly labels this as expanded
+content so existing completion does not imply the new lessons were read.
