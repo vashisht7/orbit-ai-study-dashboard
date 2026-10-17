@@ -420,3 +420,57 @@
 .local-ai-map summary, .local-ai-answer summary { cursor: pointer; font-weight: 700; }
 .local-ai-map li { margin: .6rem 0; }
 .local-ai-map [aria-current="page"] { font-weight: 800; text-decoration: underline; }
+
+/* Calm chapter path: one objective first, optional activities on request. */
+.study-tools { margin-left:auto; max-width:100%; }
+.study-tools > summary, .chapter-browser > summary, .extra-views > summary,
+.optional-practice > summary, .reading-outline > summary, .reading-review > summary {
+  cursor:pointer; color:#b9cce5; padding:12px 0; font-weight:600; line-height:1.5;
+}
+.study-tools[open] { padding:12px; border:1px solid #30425c; border-radius:12px; }
+.study-tools .topright, .study-tools .gamify-bar { flex-wrap:wrap; margin:10px 0; }
+.hero { padding:20px 0; }
+.hero h1 { font-size:clamp(2rem,4vw,3.2rem); }
+.hero .mastery { display:none; }
+.journey { margin-bottom:24px; }
+.chapter-browser { border-top:1px solid #28384e; border-bottom:1px solid #28384e; }
+.level-stars, .day-progress-track, .xp-chip { display:none; }
+.level-map { gap:12px; }
+.day-progress strong { font-size:1rem; }
+.session-goal { max-width:880px; margin:24px auto 32px; padding:28px; border:1px solid #3b506a; border-radius:18px; background:#101c2a; }
+.session-goal h3 { font-size:1.4rem; line-height:1.5; margin:12px 0; }
+.session-goal p, .session-goal li { color:#c4d2e3; line-height:1.8; }
+.session-goal ol { padding-left:24px; margin:18px 0; }
+.session-goal li { margin:10px 0; }
+.session-goal .quiet { display:block; margin-top:14px; }
+.session-stop { border-top:1px solid #30425c; padding-top:18px; }
+.workspace { display:block; max-width:1000px; margin:0 auto; }
+.book { width:100%; }
+#reading { max-width:850px; margin:auto; font-size:18px; line-height:1.85; padding:32px 36px; }
+#reading p { line-height:1.85; }
+.bookbar { flex-wrap:wrap; gap:10px; }
+.view-tabs { flex-wrap:wrap; }
+.extra-views { padding:0 8px; }
+.extra-views button { display:block; width:100%; margin:6px 0; }
+.mission { position:static; margin:28px auto; max-width:880px; }
+.mission .evidence { margin-top:24px; }
+.optional-practice { margin:18px 0; border-top:1px solid #30425c; border-bottom:1px solid #30425c; }
+.reading-outline, .reading-review { border:1px solid #30425c; border-radius:12px; padding:4px 18px; margin:22px 0; }
+.lesson-footer { flex-wrap:wrap; gap:12px; }
+.highlight-pulse { animation:none !important; }
+@media(max-width:600px) {
+  .session-goal { padding:20px; }
+  #reading { padding:24px 18px; font-size:17px; }
+  .day-heading { flex-wrap:wrap; }
+  .view-tabs button { padding:10px; }
+  .bookbar-right { flex-wrap:wrap; }
+}
+.journey { padding:24px 0 12px; margin-bottom:0; }
+.hero { padding:8px 0; margin-bottom:18px; }
+.hero h1 { font-size:clamp(1.7rem,3vw,2.4rem); letter-spacing:-1px; }
+.hero h1 br { display:none; }
+.hero h1 span::before { content:' '; }
+.hero .intro { margin-top:12px; }
+.day-panel { padding:24px 0; border-top:0; }
+.day-heading { margin-bottom:16px; }
+.study-tools summary { list-style:revert; }

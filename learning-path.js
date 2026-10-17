@@ -1,0 +1,40 @@
+// Chapters describe subject progression; lesson numbers are not calendar deadlines.
+window.LEARNING_CHAPTERS = [
+  {title:'How models learn',first:1,last:8,purpose:'Understand predictions, numbers, loss and learning.'},
+  {title:'Inside a language model',first:9,last:13,purpose:'Follow attention, context and generated tokens.'},
+  {title:'Build useful AI applications',first:14,last:20,purpose:'Connect evidence, tools and application boundaries.'},
+  {title:'Improve and run your models',first:21,last:26,purpose:'Evaluate, serve and adapt models for real tasks.'},
+  {title:'Apply and explain your knowledge',first:27,last:30,purpose:'Bring the pieces together in a project you can defend.'}
+];
+window.LEARNING_OUTCOMES = [
+'Identify what the model proposes and what your application controls.',
+'Explain what a vector stores and what a matrix does to it.',
+'Explain how scores become probabilities and what temperature changes.',
+'Use counts to predict a next word and explain one limitation.',
+'Trace text into token IDs and then into embedding vectors.',
+'Explain how a prediction, loss, gradient and learning rate produce one weight update.',
+'Trace one training update and explain why validation uses separate examples.',
+'Explain how a neural layer transforms numbers and how autograd finds derivatives.',
+'Explain how a token uses attention to gather relevant information.',
+'Follow one token through a transformer block and name what each part changes.',
+'Explain why a model needs position information and why a KV cache grows.',
+'Explain how the next token is selected and distinguish prompt processing from generation.',
+'Explain why a clear prompt helps and why generated JSON still needs checking.',
+'Explain how embeddings help find related text without an exact word match.',
+'Trace a question through retrieval, evidence and an answer.',
+'Explain why combining keyword and semantic search can improve retrieval.',
+'Trace a proposed action through validation and user approval.',
+'Explain how an agent tracks progress and recovers without repeating an action.',
+'Explain why retrieved instructions are untrusted and where permissions are enforced.',
+'Explain what a protocol standardizes between an AI application and a tool.',
+'Define a useful success metric and explain what a test result does not establish.',
+'Distinguish first-token delay, generation speed and overall request time.',
+'Identify the artifacts and checks needed to reproduce or roll back a model release.',
+'Explain what LoRA trains, what it freezes and what QLoRA adds.',
+'Distinguish preference learning, reward-based learning and distillation.',
+'Trace a voice request through transcription, interpretation and application action.',
+'Explain one project decision with a tradeoff, a measured result and a limitation.',
+'Choose a small capstone question and a clear way to test whether it works.',
+'Match a failure symptom to a parameter or system stage worth investigating.',
+'Follow the tiny decoder from input tokens to a predicted next token.'
+];

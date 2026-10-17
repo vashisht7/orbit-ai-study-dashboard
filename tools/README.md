@@ -53,3 +53,13 @@ The shared NoteEchoes simulator stays separately accessible as `#day-N/lab`.
 Local AI completion uses the existing `localai` progress key; no stored notes or
 old completion marks are cleared. The reader explicitly labels this as expanded
 content so existing completion does not imply the new lessons were read.
+
+## Calm chapter navigation
+
+`learning-path.js` defines five subject chapters and 30 distinct session outcomes.
+Lesson routes and stored day keys are retained for compatibility. The main path
+uses reading checks as self-reported progress, not all six optional activities.
+The page starts with one goal, a reason to learn it and a stopping point. Extra
+practice, project views and tool controls use expandable sections. The dedicated
+animation tab remains directly available. Validate chapter boundaries (1, 9, 14,
+21, 27), all 30 goals, optional-view entry points and saved notes when editing.

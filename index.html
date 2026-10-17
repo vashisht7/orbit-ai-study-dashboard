@@ -10,7 +10,7 @@
   <title>Orbit · Your AI Engineering Odyssey</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="reader/vendor/katex.min.css">
-  <link rel="stylesheet" href="orbit.css?v=local-ai-lessons-1">
+  <link rel="stylesheet" href="orbit.css?v=calm-chapters-1">
 
 
 
@@ -19,7 +19,7 @@
 
 
 
-<link rel="stylesheet" href="learning-guides.css?v=local-ai-lessons-1"><script defer src="dashboard.bundle.js?v=local-ai-lessons-1"></script></head>
+<link rel="stylesheet" href="learning-guides.css?v=calm-chapters-1"><script defer src="dashboard.bundle.js?v=calm-chapters-1"></script></head>
 <body>
   <a class="skip" href="#reading">Skip to reading</a>
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
@@ -32,6 +32,7 @@
       </a>
     </div>
 
+    <details class="study-tools"><summary>Tools & saved progress</summary>
     <!-- Gamified Player Bar -->
     <div class="gamify-bar" id="gamify-bar">
       <!-- Streak Pill -->
@@ -80,6 +81,7 @@
         <span></span><span></span>
       </button>
     </div>
+    </details>
   </header>
 
   <main>
@@ -87,28 +89,29 @@
       <div class="hero">
         <div>
           <p class="eyebrow">YOUR NEXT CHAPTER</p>
-          <h1>Small steps.<br><span>Real understanding.</span></h1>
-          <p class="intro">Read. Make a prediction. Change something.<br>Build an AI system you can explain.</p>
+          <h1>One useful idea.<br><span>At your pace.</span></h1>
+          <p class="intro">Five chapters. Thirty lessons. No deadline.<br>Learn one idea, try it, then explain it in your own words.</p>
         </div>
-        <div class="mastery" title="Total curriculum levels completed">
+        <div class="mastery" title="Lessons whose reading you marked complete; a self-report, not a test score">
           <svg viewBox="0 0 120 120" aria-hidden="true">
             <circle class="ringbase" cx="60" cy="60" r="51"/>
             <circle id="ring" cx="60" cy="60" r="51"/>
           </svg>
           <div>
             <b id="overall">0</b>
-            <span>LEVELS COMPLETE</span>
+            <span>READINGS CHECKED</span>
           </div>
         </div>
       </div>
 
+      <details class="chapter-browser"><summary>Explore the five chapters · optional 30-session plan</summary>
       <div class="journey-head">
         <div>
           <p class="eyebrow" id="stage"></p>
           <h2>Your learning path</h2>
         </div>
         <div class="journey-actions">
-          <button id="resume" class="subtle highlight-pulse">Next unfinished level ↗</button>
+          <button id="resume" class="subtle highlight-pulse">Continue reading ↗</button>
         </div>
       </div>
 
@@ -116,13 +119,14 @@
 
       <div class="map-wrap">
         <button class="map-arrow" id="map-prev" aria-label="Scroll learning path left">←</button>
-        <div id="level-map" class="level-map" role="navigation" aria-label="Choose a day"></div>
+        <div id="level-map" class="level-map" role="navigation" aria-label="Choose a lesson"></div>
         <button class="map-arrow" id="map-next" aria-label="Scroll learning path right">→</button>
       </div>
       <div class="map-caption">
-        <span>30 levels · Duolingo-style milestones & stars · Your pace</span>
+        <span>Thirty sessions is a suggestion. Repeat a lesson whenever it helps.</span>
         <span id="total-tasks">0 / 180 tasks</span>
       </div>
+      </details>
     </section>
 
     <section id="day-panel" class="day-panel">
@@ -139,6 +143,7 @@
         </div>
       </div>
 
+      <section id="session-goal" class="session-goal" aria-label="Your learning goal"></section>
       <div class="workspace" id="workspace">
         <article class="book" id="book-panel">
           <!-- Sticky Reading Progress Bar -->
@@ -151,8 +156,10 @@
               <button id="read-tab" aria-pressed="true">📖 Read & experiment</button>
               <button id="b1b-tab" aria-pressed="false">🎬 Lesson animation</button>
               <button id="interview-tab" aria-pressed="false">🧠 Recall</button>
+              <details class="extra-views"><summary>Apply it to a project · optional</summary>
               <button id="localai-tab" aria-pressed="false">⚡ Local AI lesson</button>
               <button id="simulator-tab" aria-pressed="false">⚡ NoteEchoes Lab</button>
+              </details>
             </div>
             <div class="bookbar-right">
               <span id="readtime-left" class="readtime-ticker">⏱️ 4 min left</span>
@@ -168,25 +175,28 @@
             <button id="finish-reading" class="primary">
               <span class="check-icon">✓</span> I can explain this lesson (+100 XP)
             </button>
-            <button id="next-day" class="subtle">Next level →</button>
+            <button id="next-day" class="subtle">Next lesson, when ready →</button>
           </div>
         </article>
 
         <aside class="mission" id="mission-panel">
           <div class="mission-header">
-            <p class="eyebrow">TODAY’S MISSION</p>
-            <h3>Learn it. Then use it.</h3>
+            <p class="eyebrow">YOUR TAKEAWAY</p>
+            <h3>What can you explain now?</h3>
           </div>
-          <p class="mission-intro">Earn XP for every practice step. Check a task only after genuinely doing it.</p>
+          <p class="mission-intro">A few sentences are enough. Explain the idea, why it helps, and what changes when you use it.</p>
 
+          <details class="optional-practice"><summary>Optional practice & Local AI · choose only what helps</summary>
+          <p>You do not need to complete these activities to move on. Coding and system design can be separate study sessions.</p>
           <div id="spotlight-card"></div>
           <div id="checklist"></div>
+          </details>
 
           <div class="evidence">
             <p class="eyebrow">MAKE IT YOURS</p>
             <p id="evidence"></p>
-            <label for="notes">One thing I can now explain <span class="xp-chip">+50 XP</span></label>
-            <textarea id="notes" rows="4" placeholder="What changed when I adjusted the parameter? (e.g. why did changing learning rate cause loss oscillation?)"></textarea>
+            <label for="notes">One idea in my own words</label>
+            <textarea id="notes" rows="4" placeholder="What is the idea? Why do we need it? What would change if I adjusted one thing? What is still unclear?"></textarea>
           </div>
           <p class="quiet">Progress lives in this browser. Use Library → Save progress to keep a backup.</p>
         </aside>
@@ -208,7 +218,7 @@
       </div>
       <button id="close-menu" class="icon" aria-label="Close library">✕</button>
     </div>
-    <p class="quiet">Your daily lesson stays on the main page. These are here when you need them.</p>
+    <p class="quiet">Your current lesson stays on the main page. These are here when you need them.</p>
     <nav class="library-links">
       <a href="practice.html"><b>⌨️ Code Lab</b><span>84 coding problems with company sources, explanations and tests ↗</span></a>
       <a href="practice.html?tab=terminal"><b>🖥️ Python terminal</b><span>Run any Python in your browser ↗</span></a>

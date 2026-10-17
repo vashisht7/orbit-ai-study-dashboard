@@ -21,9 +21,9 @@ const base=process.env.BASE_URL||'http://127.0.0.1:8765';
     const code=el.querySelector('pre');const experiment=el.querySelector('#experiment');
     const worked=[...el.querySelectorAll('h3')].find(h=>h.textContent.startsWith('Worked example:'));
     const before=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
-    return {concept:headings[0].startsWith('The concept:'),workedBeforeCode:before(worked,code),codeBeforePractice:before(code,experiment),mathErrors:el.querySelectorAll('.katex-error').length,formulaCount:el.querySelectorAll('.katex').length,rawBlocks:el.innerText.includes('BOOKBLOCK'),animationExposed:!!el.querySelector('.lesson-animation .b1b-canvas')&&!el.querySelector('.lesson-animation')?.closest('details')};
+    return {concept:headings[0].startsWith('The concept:'),workedBeforeCode:before(worked,code),codeBeforePractice:before(code,experiment),mathErrors:el.querySelectorAll('.katex-error').length,formulaCount:el.querySelectorAll('.katex').length,rawBlocks:el.innerText.includes('BOOKBLOCK'),animationAvailable:!!el.querySelector('.lesson-animation .b1b-canvas')};
    });
-   assert.ok(checks.concept&&checks.workedBeforeCode&&checks.codeBeforePractice&&checks.animationExposed,`${reader}${id} reading order`);
+   assert.ok(checks.concept&&checks.workedBeforeCode&&checks.codeBeforePractice&&checks.animationAvailable,`${reader}${id} reading order`);
    assert.equal(checks.mathErrors,0,`${reader}${id} equations`);assert.equal(checks.rawBlocks,false);
    if(!standalone){
     assert.equal(await page.locator('.quiz-opt-btn').count(),3);
@@ -43,7 +43,7 @@ const base=process.env.BASE_URL||'http://127.0.0.1:8765';
  await page.locator('.quiz-opt-btn[data-correct="true"]').click();
  assert.equal(await page.locator('.quiz-opt-btn:disabled').count(),3);
  // The day's animation is one click away, independently of the audit.
- await page.locator('[data-open-lesson-animation]').click();
+ await page.locator('#b1b-tab').click();
  assert.match(page.url(),/#day-6\/animation$/);
  assert.equal(await page.locator('#job-readiness-hub').count(),0);
  assert.equal(await page.locator('.b1b-theater[data-b1b-day="6"] canvas').isVisible(),true);

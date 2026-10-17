@@ -487,7 +487,8 @@ function render(s) {
   return marked.parse(s).replace(/<p>BOOKBLOCK(\d+)END<\/p>/g, (_, n) => blocks[+n]);
 }
 
-const stages = ['Foundations', 'Inside the model', 'Build reliable AI', 'Ship & defend', 'Your next step'];
+const stages = window.LEARNING_CHAPTERS.map(c => c.title);
+const chapterFor = day => window.LEARNING_CHAPTERS.findIndex(c => day >= c.first && day <= c.last);
 
 const noteLens = [
   ['Application boundary', 'VOICE → TRANSCRIBE → INTERPRET → VALIDATE → ACT', 'NoteEchoes is a pipeline, not one magic model. This lesson lives at the boundary between a user request and a safe application action.', 'Trace one request and label where text, model output, validation and the side effect change.'],
@@ -600,7 +601,7 @@ function noteLensCard() {
 // PROGRESS, STATS & UI REFRESH
 // =====================================================================
 function refreshProgress() {
-  const completeLevels = DAYS.filter(d => count(d.day) === taskKeys.length).length;
+  const completeLevels = DAYS.filter(d => !!state.days[d.day]?.checks?.reading).length;
   const totalTasks = DAYS.reduce((s, d) => s + count(d.day), 0);
   const totalXP = calculateTotalXP();
   const playerRank = getPlayerRank(totalXP);
@@ -608,7 +609,7 @@ function refreshProgress() {
   // Overall Mastery
   $('#overall').textContent = completeLevels;
   $('#ring').style.strokeDashoffset = 320.442 * (1 - completeLevels / 30);
-  $('#total-tasks').textContent = `${totalTasks} / 180 tasks`;
+  $('#total-tasks').textContent = `${completeLevels} readings checked · extra practice is optional`;
 
   // Streak Pill
   $('#streak-val').textContent = state.streak.count || 1;
@@ -627,17 +628,18 @@ function refreshProgress() {
   // Current Day Progress
   const curCount = count(selected);
   const curPercent = Math.round(curCount * (100 / 6));
-  $('#day-percent').textContent = `${curPercent}%`;
-  $('#day-count').textContent = `${curCount} of 6 complete`;
-  $('#day-fill').style.width = `${curPercent}%`;
+  $('#day-percent').textContent = dayState().checks.reading ? 'Read ✓' : 'Learning';
+  $('#day-count').textContent = 'Your pace · no deadline';
+  $('#day-fill').style.width = dayState().checks.reading ? '100%' : '0%';
 
   // Update Level Nodes & Stars in Roadmap
   $$('.level').forEach(el => {
     const n = +el.dataset.day;
     const c = count(n);
-    el.classList.toggle('done', c >= taskKeys.length);
-    el.querySelector('.node').textContent = c >= taskKeys.length ? '✓' : String(n).padStart(2, '0');
-    el.querySelector('.level-count').textContent = c >= taskKeys.length ? 'Complete' : `${c} / 6`;
+    const readDone = !!state.days[n]?.checks?.reading;
+    el.classList.toggle('done', readDone);
+    el.querySelector('.node').textContent = readDone ? '✓' : String(n).padStart(2, '0');
+    el.querySelector('.level-count').textContent = readDone ? 'Reading checked' : 'Explore this idea';
 
     // Star rating
     const starsEl = el.querySelector('.level-stars');
@@ -692,7 +694,7 @@ function setCheck(key, value, triggerEl) {
 // BUILD ROADMAP & NAV
 // =====================================================================
 function buildMap() {
-  const w = DAYS[selected - 1].week;
+  const w = chapterFor(selected);
 
   $('#weeks').innerHTML = stages.map((t, i) => `
     <button data-week="${i}" aria-pressed="${i === w}">
@@ -701,19 +703,19 @@ function buildMap() {
   `).join('');
 
   $('#weeks').querySelectorAll('button').forEach(b => {
-    b.onclick = () => navigate(+b.dataset.week * 7 + 1);
+    b.onclick = () => navigate(window.LEARNING_CHAPTERS[+b.dataset.week].first);
   });
 
-  $('#stage').textContent = `STAGE ${w + 1} / ${stages[w].toUpperCase()}`;
+  $('#stage').textContent = `CHAPTER ${w + 1} · ${window.LEARNING_CHAPTERS[w].purpose}`;
 
-  $('#level-map').innerHTML = DAYS.map(d => {
+  $('#level-map').innerHTML = DAYS.filter(d => chapterFor(d.day) === w).map(d => {
     const c = count(d.day);
     let stars = 0;
     if (c === 6) stars = 3;
     else if (c >= 4) stars = 2;
     else if (c >= 2) stars = 1;
 
-    const isDone = c >= taskKeys.length;
+    const isDone = !!state.days[d.day]?.checks?.reading;
     return `
       <button class="level ${d.day === selected ? 'active' : ''} ${isDone ? 'done' : ''}" data-day="${d.day}" ${d.day === selected ? 'aria-current="step"' : ''}>
         <span class="node">${isDone ? '✓' : String(d.day).padStart(2, '0')}</span>
@@ -723,7 +725,7 @@ function buildMap() {
           <span class="${stars >= 3 ? 'star-on' : 'star-off'}">★</span>
         </div>
         <span class="level-label">${esc(window.BEGINNER[d.day - 1].title.split(':')[0])}</span>
-        <span class="level-count">${isDone ? 'Complete' : c + ' / 6'}</span>
+        <span class="level-count">${isDone ? 'Reading checked' : 'Explore this idea'}</span>
       </button>
     `;
   }).join('');
@@ -1239,8 +1241,8 @@ function updateReadingCompletion() {
   const local = mode === 'localai';
   const done = !!dayState().checks[local ? 'localai' : 'reading'];
   $('#finish-reading').textContent = local
-    ? (done ? '✓ Local AI complete (+70 XP)' : '✓ I can explain this Local AI concept (+70 XP)')
-    : (done ? '✓ Reading complete (+100 XP)' : '✓ I can explain this lesson (+100 XP)');
+    ? (done ? '✓ Local AI reading checked' : '✓ I can explain this Local AI concept')
+    : (done ? '✓ Reading checked · revisit whenever useful' : '✓ I can explain the idea and an example');
 }
 
 function renderLocalAILesson() {
@@ -1274,6 +1276,7 @@ function renderLocalAILesson() {
 
 function showReading() {
   const localView = mode === 'localai';
+  if (localView || mode === 'simulator') $('.extra-views').open = true;
   updateReadingCompletion();
   $('#readtime-left').textContent = localView ? '⏱️ 15–25 min with practice' : `⏱️ ~${Math.ceil(window.BEGINNER[selected - 1].body.split(/\s+/).length / 160)} min reading`;
   const c = window.BEGINNER[selected - 1];
@@ -1324,12 +1327,11 @@ function showReading() {
     $('#reading').innerHTML = `
       <p class="eyebrow">${esc(c.part.toUpperCase())} · LESSON ${selected}</p>
       <p class="notice">Concept → rule and derivation → worked example → practice → explain it.</p>
-      ${window.renderLessonContents(selected)}
+      <details class="reading-outline"><summary>Jump to a section or open the visual</summary>${window.renderLessonContents(selected)}</details>
       ${window.renderLessonText(selected, render)}
       <h3>Practice after the explanation</h3>
       <div id="experiment"></div>
-      ${window.renderLessonGuide(selected)}
-      ${noteLensCard()}
+      <details class="reading-review"><summary>Review with the visual and project connection · optional</summary>${window.renderLessonGuide(selected)}${noteLensCard()}</details>
       ${renderComprehensionCheck(selected)}
     `;
     window.mountBeginnerLab($('#experiment'), c.experiment);
@@ -1381,13 +1383,23 @@ function show() {
   const d = DAYS[selected - 1];
   const c = window.BEGINNER[selected - 1];
 
-  document.title = `Level ${selected} · ${c.title} · Orbit`;
-  $('#day-kicker').textContent = `LEVEL ${String(selected).padStart(2, '0')} · ${stages[d.week].toUpperCase()}`;
+  document.title = `Lesson ${selected} · ${c.title} · Orbit`;
+  $('#day-kicker').textContent = `CHAPTER ${chapterFor(selected) + 1} · LESSON ${selected} OF 30`;
   $('#day-title').textContent = c.title;
-  $('#day-subtitle').textContent = 'One concept at a time. Reading + practice + an explanation in your own words.';
+  $('#day-subtitle').textContent = 'Stay with this idea until you can explain it. One lesson can take more than one session.';
   $('#readtime-left').textContent = `⏱️ ~${Math.ceil(c.body.split(/\s+/).length / 160)} min left`;
 
-  // Everyday Local AI Spotlight Card & Resume Defense Drill Card
+  $('#session-goal').innerHTML = `
+    <p class="eyebrow">ONE GOAL FOR THIS SESSION</p>
+    <h3>${esc(window.LEARNING_OUTCOMES[selected - 1])}</h3>
+    <p><strong>Why this is useful:</strong> ${esc(c.meaning.why)}</p>
+    <ol><li><strong>Understand.</strong> Read the explanation and define the unfamiliar words.</li><li><strong>Try one thing.</strong> Work through the example or change one setting. Predict the result first.</li><li><strong>Explain.</strong> Close the reading and describe what happens, why it helps, and what changes.</li></ol>
+    <p class="session-stop"><strong>Enough for today:</strong> one explanation in your own words and one example you can follow. If a step is unclear, write the question and return to it. You do not have to finish the page.</p>
+    <button type="button" id="begin-session" class="primary">Continue this lesson →</button>
+    <span class="quiet">Try a 25-minute session, then decide whether to continue or pause.</span>`;
+  $('#begin-session').onclick = () => setLessonView('read');
+
+  // Optional project companion
   const spotlightEl = $('#spotlight-card');
   if (spotlightEl) {
     spotlightEl.innerHTML = `
@@ -1464,7 +1476,7 @@ function show() {
     codingTask.appendChild(note);
   }
 
-  $('#evidence').textContent = d.evidence;
+  $('#evidence').textContent = window.LEARNING_OUTCOMES[selected - 1] + ' Use one small example to support your explanation.';
   $('#notes').value = dayState().notes || '';
   let savedStepNotes = $('#saved-step-notes');
   if(!savedStepNotes){savedStepNotes=document.createElement('details');savedStepNotes.id='saved-step-notes';$('#notes').after(savedStepNotes);}
@@ -1531,7 +1543,7 @@ if ($('#job-audit-pill')) {
     setLessonView('audit');
   };
 }
-$('#resume').onclick = () => navigate(DAYS.find(d => count(d.day) < taskKeys.length)?.day || 30);
+$('#resume').onclick = () => { navigate(DAYS.find(d => !state.days[d.day]?.checks?.reading)?.day || 30); $('#day-panel').scrollIntoView({block:'start'}); };
 
 $('#map-prev').onclick = () => $('#level-map').scrollBy({ left: -420, behavior: 'smooth' });
 $('#map-next').onclick = () => $('#level-map').scrollBy({ left: 420, behavior: 'smooth' });
