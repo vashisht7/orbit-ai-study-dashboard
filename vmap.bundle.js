@@ -2447,6 +2447,32 @@ window.LESSON_GUIDES = [
 
 ;
 
+/* textbook-figures.js */
+/* Original illustrated teaching figures. No book images are redistributed. */
+(() => {
+ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const architecture=[
+ ['Text → token IDs','A tokenizer converts text into vocabulary IDs. IDs are addresses, not meanings.','“The cat” → [illustrative ID 12, ID 41]. Actual IDs depend on the tokenizer.'],
+ ['Token + position embeddings','Look up a vector for each ID and add position information so order is available.','Two tokens, width 8 → a 2 × 8 matrix. This example uses learned position embeddings, as in GPT-2.'],
+ ['Normalize → causal multi-head attention','Normalize features, then let each position mix information from itself and earlier positions. Different heads use different learned projections.','Q = XWq, K = XWk, V = XWv. Attention = softmax(QKᵀ / √dₖ + causal mask)V. Future-position mask entries are −∞ before softmax.'],
+ ['Add the residual connection','Add the attention result to the incoming representation. This provides a direct path for information and gradients.','H = X + Attention(Norm(X)). Both terms must have the same shape.'],
+ ['Normalize → feed-forward → add','Transform the features at each position with the same small neural network, then add another residual connection.','Y = H + FFN(Norm(H)). The FFN mixes features within a position; attention mixes information across positions.'],
+ ['Repeat the Transformer block','Repeat the attention and feed-forward stages with each block’s own weights. Representations become increasingly contextual.','Stages 3–5 form one block. The sequence length and model width stay the same through these blocks.'],
+ ['Final normalization → vocabulary scores','Normalize the final representation and project it into one score per vocabulary entry. These scores are logits.','With vocabulary size 100, two positions yield 2 × 100 logits. Generation uses the last position.'],
+ ['Choose a token → append → repeat','Softmax turns scores into probabilities. Sampling or greedy selection chooses an ID, which is appended for the next prediction.','Inference keeps model weights fixed. Training instead compares logits with targets, computes gradients, and updates trainable weights.']
+ ];
+ function data(day){const g=window.LESSON_GUIDES[day-1];return day===9||day===10||day===30?{title:'Inside a decoder-only Transformer',steps:architecture,caption:'A simplified GPT-2-style, pre-normalization decoder. Residual paths are shown by the addition stages. Dropout is omitted; other model families may use different normalization or position methods.'}:{title:g.title,steps:g.steps.map(([a,b])=>[a,b,'']),caption:g.summary};}
+ window.renderTextbookFigure=day=>{
+  const d=data(Number(day));return `<figure class="textbook-figure" data-figure-day="${day}"><figcaption><span>FIGURE ${day}.1 · FOLLOW THE PROCESS</span><h2>${esc(d.title)}</h2><p>${esc(d.caption)}</p></figcaption>${[9,10,30].includes(Number(day)) ? `<img class="architecture-image" src="${location.pathname.includes("/beginner/") ? "../" : ""}assets/figures/transformer-block.svg" alt="One Transformer block: normalization, causal attention, residual addition, normalization, feed-forward network, and residual addition. Bypass arrows carry X and H around the two transformations."><p class="figure-footnote"><a href="${location.pathname.includes("/beginner/") ? "../" : ""}assets/figures/transformer-block.svg" target="_blank" rel="noopener">Open the diagram full size ↗</a><br>The bypass arrows explain the plus signs. Follow the full model below; this block sits inside stages 3–5.</p>` : ""}<ol class="textbook-flow">${d.steps.map((s,i)=>`<li><button type="button" data-figure-step="${i}" aria-pressed="${i===0}"><small>${i+1}</small>${esc(s[0])}</button>${i<d.steps.length-1?'<span class="figure-arrow" aria-hidden="true">↓</span>':''}</li>`).join('')}</ol><div class="figure-explanation" aria-live="polite"><b>${esc(d.steps[0][0])}</b><p>${esc(d.steps[0][1])}</p><p>${esc(d.steps[0][2])}</p></div><div class="figure-controls"><button type="button" data-figure-prev disabled>Previous</button><button type="button" data-figure-next>Next step →</button><button type="button" data-figure-play>Play walkthrough</button></div><p class="figure-footnote">Read the caption, follow one arrow, then explain what changed. This is a captioned interactive diagram; no audio is required.</p></figure>`;
+ };
+ const timers=new Map();
+ function stop(root){clearInterval(timers.get(root));timers.delete(root);root.querySelector('[data-figure-play]').textContent='Play walkthrough';}
+ function show(root,i){const d=data(+root.dataset.figureDay);root.dataset.step=i;root.querySelectorAll('[data-figure-step]').forEach((b,j)=>b.setAttribute('aria-pressed',String(i===j)));root.querySelector('.figure-explanation').innerHTML=`<b>${esc(d.steps[i][0])}</b><p>${esc(d.steps[i][1])}</p><p>${esc(d.steps[i][2])}</p>`;root.querySelector('[data-figure-prev]').disabled=i===0;root.querySelector('[data-figure-next]').disabled=i===d.steps.length-1;}
+ document.addEventListener('click',e=>{const b=e.target.closest('button');const root=b?.closest('[data-figure-day]');if(!root)return;const n=data(+root.dataset.figureDay).steps.length;let i=+(root.dataset.step||0);if(b.hasAttribute('data-figure-play')){if(timers.has(root)){stop(root);return;}if(i===n-1)show(root,0);b.textContent='Pause';timers.set(root,setInterval(()=>{if(!root.isConnected||document.hidden){stop(root);return;}let next=+(root.dataset.step||0)+1;if(next<n)show(root,next);if(next>=n-1)stop(root);},6500));return;}stop(root);if(b.hasAttribute('data-figure-step'))i=+b.dataset.figureStep;else if(b.hasAttribute('data-figure-next'))i++;else if(b.hasAttribute('data-figure-prev'))i--;show(root,Math.max(0,Math.min(n-1,i)));});
+})();
+
+;
+
 /* learning-guides.js */
 /* Shared, accessible diagram cards + 3Blue1Brown interactive theater for dashboard, beginner reader, and visual map. */
 (() => {
@@ -2483,7 +2509,7 @@ window.LESSON_GUIDES = [
   window.renderLessonText = (day, renderer) => {
     let i = 0;
     let html = renderer(window.BEGINNER[Number(day)-1].body).replace(/<h3>/g, () => `<h3 id="lesson-${Number(day)}-section-${i++}" class="lesson-section-heading" tabindex="-1">`);
-    const story = window.renderTrainingStory?.(day) || '';
+    const story = (window.renderTrainingStory?.(day) || '') + (window.renderTextbookFigure?.(day) || '');
     if (story) {
       const nextHeading = html.indexOf(`<h3 id="lesson-${Number(day)}-section-1"`);
       html = html.slice(0, nextHeading) + story + html.slice(nextHeading);

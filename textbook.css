@@ -1,0 +1,49 @@
+/* Paper reading surface, restrained ink colors, original figure system. */
+.study-dashboard{--accent-cyan:#adc8ed;--accent-emerald:#8ba8b6;--accent-primary:#7b96bd;background:#17212d;background-image:none}
+.study-dashboard .book{background:#fffdf8;border-color:#d6d1c6;box-shadow:0 16px 48px #0002}
+.study-dashboard #reading,#lesson{background:#fffdf8;color:#28323d;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.85}
+.study-dashboard #reading{max-width:900px;margin:auto;padding:42px clamp(20px,5vw,64px)}
+#reading h2,#reading h3,#reading h4,#lesson h2,#lesson h3{color:#182b40!important;font-family:system-ui,sans-serif;letter-spacing:-.025em}
+#reading strong,#reading b,#lesson strong{color:inherit}
+#reading > h3,#lesson > h3{border-top:1px solid #dedbd3;padding-top:28px;margin-top:48px}
+#reading > p,#lesson > p{max-width:70ch}
+#reading a,#lesson a{color:#285a89}
+#reading .eyebrow,#reading .notice,#reading summary,#lesson summary{color:#40566e}
+#reading .notice{background:#f0f3f5;border:0;border-left:3px solid #6885a5;box-shadow:none;font-size:15px}
+#reading code,#lesson code{background:#eef1f3;color:#264d6c;border-color:#d5dde4}
+#reading pre,#lesson pre{background:#eef1f3;color:#25384c;border:1px solid #d5dde4;box-shadow:none}
+#reading pre code,#lesson pre code{background:none;color:inherit}
+#reading th,#reading td,#lesson th,#lesson td{border-color:#d4dce2;color:#28323d}
+#reading th,#lesson th{background:#edf1f4}
+#reading .lesson-contents{background:#f0f3f5;color:#28323d;border-color:#ccd6df}
+#reading .lesson-contents button{color:#285a89}
+#reading .lesson-watch{background:#e8eef5;color:#254b71;border-color:#8ea5ba}
+#reading .training-story,#lesson .training-story{background:#edf2f6;border-color:#b3c3d1;color:#28323d;font-family:system-ui,sans-serif}
+#reading .training-story :is(b,strong,small,p,summary),#lesson .training-story :is(b,strong,small,p,summary){color:#28323d}
+#reading .training-rule,#lesson .training-rule{background:#e3ebf1;border-color:#567c9c}
+#reading .training-node.is-current,#reading .training-gradient.is-current,#lesson .training-node.is-current{background:#dce9f4;border-color:#497da8;box-shadow:none}
+#reading .training-arrow,#lesson .training-arrow{color:#426989}
+#reading .training-epoch span,#lesson .training-epoch span{background:#dce5ed}
+.textbook-figure{margin:36px 0;padding:28px;border:1px solid #bac8d3;border-radius:8px;background:#f1f5f8;color:#263b50;font-family:system-ui,sans-serif;font-size:15px;line-height:1.65;min-width:0}
+.textbook-figure figcaption>span{font-size:11px;letter-spacing:.12em;font-weight:700;color:#4b6982}
+#reading .textbook-figure h2,#lesson .textbook-figure h2{font-size:24px;margin:12px 0}
+.textbook-flow{list-style:none!important;padding:0!important;margin:24px auto!important;max-width:480px}
+#reading .textbook-flow li,#lesson .textbook-flow li{margin:0;text-align:center}
+.textbook-flow button{width:100%;display:flex;gap:12px;align-items:center;text-align:left;padding:13px 16px;border:1px solid #afbeca;border-radius:6px;background:#fff;color:#253d53;font:inherit;min-height:48px}
+.textbook-flow button small{font-size:12px;border-radius:50%;background:#e6edf3;min-width:26px;text-align:center;padding:3px}
+.textbook-flow button[aria-pressed=true]{background:#dcebf7;border:2px solid #356b94;padding:12px 15px}
+.figure-arrow{display:block;color:#6a8193;height:25px;line-height:25px}
+.figure-explanation{background:white;border-left:3px solid #426e94;padding:16px 20px;min-height:160px}
+#reading .figure-explanation p,#lesson .figure-explanation p{margin:8px 0}
+.figure-controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.figure-controls button{padding:10px 14px;border:1px solid #7893aa;background:#fff;color:#254b71;border-radius:5px;font:inherit;min-height:44px}
+.figure-controls button:disabled{opacity:.45}
+.textbook-figure button:focus-visible{outline:3px solid #b57427;outline-offset:3px}
+#reading .figure-footnote,#lesson .figure-footnote{font-size:12px;color:#536b7e;margin-bottom:0}
+@media(max-width:600px){.textbook-figure{padding:16px}.study-dashboard #reading{font-size:17px}.figure-explanation{min-height:210px}}
+@media print{.figure-controls{display:none}.textbook-figure{break-inside:avoid}}
+.architecture-image{display:block;width:100%;height:auto;margin:22px auto}
+/* Keep rewards in Tools so they do not obscure a reading session. */
+.study-dashboard #confetti-canvas,.study-dashboard .achievement-toast{display:none!important}
+#reading .textbook-figure,#lesson .textbook-figure{scroll-margin-top:calc(var(--study-header-height,72px) + var(--study-toolbar-height,96px) + 16px)}
+.study-dashboard #celebration-banner{display:none!important}

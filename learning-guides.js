@@ -33,7 +33,7 @@
   window.renderLessonText = (day, renderer) => {
     let i = 0;
     let html = renderer(window.BEGINNER[Number(day)-1].body).replace(/<h3>/g, () => `<h3 id="lesson-${Number(day)}-section-${i++}" class="lesson-section-heading" tabindex="-1">`);
-    const story = window.renderTrainingStory?.(day) || '';
+    const story = (window.renderTrainingStory?.(day) || '') + (window.renderTextbookFigure?.(day) || '');
     if (story) {
       const nextHeading = html.indexOf(`<h3 id="lesson-${Number(day)}-section-1"`);
       html = html.slice(0, nextHeading) + story + html.slice(nextHeading);
