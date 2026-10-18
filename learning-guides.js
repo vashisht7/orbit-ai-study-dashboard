@@ -38,9 +38,17 @@
       const nextHeading = html.indexOf(`<h3 id="lesson-${Number(day)}-section-1"`);
       html = html.slice(0, nextHeading) + story + html.slice(nextHeading);
     }
-    return html;
+    return `<nav class="figure-jump" aria-label="Lesson illustrations"><button type="button" data-jump-figure>↓ See this lesson’s illustration</button>${[6,7,8].includes(Number(day)) ? '<button type="button" data-jump-training>↓ See the training walkthrough</button>' : ''}</nav>` + html;
   };
   document.addEventListener('click', event => {
+    const figureJump = event.target.closest('[data-jump-figure], [data-jump-training]');
+    if (figureJump) {
+      const target = document.querySelector(figureJump.hasAttribute('data-jump-training') ? '.training-story' : '.textbook-figure');
+      target?.scrollIntoView({block:'start',behavior:'instant'});
+      target?.setAttribute('tabindex','-1');
+      target?.focus({preventScroll:true});
+      return;
+    }
     const jump = event.target.closest('[data-lesson-section]');
     if (jump) {
       const heading = document.getElementById(jump.dataset.lessonSection);
