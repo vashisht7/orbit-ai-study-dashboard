@@ -78,3 +78,14 @@ enter Focus, scroll into a later section, exit by button and Escape; check the
 progress line is at the toolbar bottom and the exit button remains in view.
 Switch Read, Animation, Recall and Local AI while focused. Compare notes and task
 checks before/after. No horizontal page overflow or browser errors should occur.
+
+## Training walkthrough (Lessons 6–8)
+
+`training-story.js` and `training-story.css` provide an eight-scene, captioned
+walkthrough with Play/Pause, Previous/Next, direct scene selection and Restart.
+It is embedded early in both readers and directly accessible at
+`#day-6/training`. All numbers derive from y_hat=x*w, squared error and mean batch
+loss; the weight remains 1 until the optimizer scene. Check both batch sizes and
+all three learning rates against a numerical derivative when modifying it.
+Lesson 7's manuscript and `lesson_07.py` now perform the same two-example update.
+Rebuild the PDF and lab ZIP when changing that downloadable lesson.

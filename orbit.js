@@ -1287,6 +1287,13 @@ function showReading() {
 
   if ($('#localai-tab')) $('#localai-tab').setAttribute('aria-pressed', mode === 'localai');
 
+  if (mode === 'training') {
+    const trainingDay = [6,7,8].includes(selected) ? selected : 6;
+    $('#reading').innerHTML = `<p class="eyebrow">LEARNING WALKTHROUGH · LESSONS 6–8</p><button type="button" class="lesson-watch" id="training-back">← Back to the written lesson</button>${window.renderTrainingStory(trainingDay)}`;
+    window.mountTrainingStories($('#reading'));
+    $('#training-back').onclick = () => setLessonView('read');
+    return;
+  }
   if (mode === 'localai') {
     renderLocalAILesson();
     return;
@@ -1334,6 +1341,7 @@ function showReading() {
       <details class="reading-review"><summary>Review with the visual and project connection · optional</summary>${window.renderLessonGuide(selected)}${noteLensCard()}</details>
       ${renderComprehensionCheck(selected)}
     `;
+    window.mountTrainingStories?.($('#reading'));
     window.mountBeginnerLab($('#experiment'), c.experiment);
     mountQuizEvents();
     if (window.hydrateAll3B1BTheaters) window.hydrateAll3B1BTheaters($('#reading'));
@@ -1377,7 +1385,7 @@ function showReading() {
 }
 
 function show() {
-  const route = location.hash.match(/^#day-(\d+)(?:\/(animation|recall|lab|audit|local-ai))?$/);
+  const route = location.hash.match(/^#day-(\d+)(?:\/(animation|recall|lab|audit|local-ai|training))?$/);
   const n = route ? Number(route[1]) : NaN;
   selected = Number.isInteger(n) && n >= 1 && n <= 30 ? n : Math.min(30, Math.max(1, state.last || 1));
   const d = DAYS[selected - 1];
@@ -1396,8 +1404,10 @@ function show() {
     <ol><li><strong>Understand.</strong> Read the explanation and define the unfamiliar words.</li><li><strong>Try one thing.</strong> Work through the example or change one setting. Predict the result first.</li><li><strong>Explain.</strong> Close the reading and describe what happens, why it helps, and what changes.</li></ol>
     <p class="session-stop"><strong>Enough for today:</strong> one explanation in your own words and one example you can follow. If a step is unclear, write the question and return to it. You do not have to finish the page.</p>
     <button type="button" id="begin-session" class="primary">Continue this lesson →</button>
+    ${[6,7,8].includes(selected)?'<button type="button" id="training-open" class="lesson-watch">See forward, backward and batches →</button>':''}
     <span class="quiet">Try a 25-minute session, then decide whether to continue or pause.</span>`;
   $('#begin-session').onclick = () => setLessonView('read');
+  if ($('#training-open')) $('#training-open').onclick = () => setLessonView('training');
 
   // Optional project companion
   const spotlightEl = $('#spotlight-card');
@@ -1486,7 +1496,7 @@ function show() {
   savedStepNotes.innerHTML='<summary>Notes you saved in the recent study view</summary>'+keptNotes.map(([key,note])=>'<h4>'+esc(noteLabels[key]||key)+'</h4><p style="white-space:pre-wrap">'+esc(note)+'</p>').join('');
   $('#next-day').disabled = selected === 30;
 
-  mode = ({animation:'b1b',recall:'recall',lab:'simulator',audit:'audit','local-ai':'localai'})[route?.[2]] || 'read';
+  mode = ({animation:'b1b',recall:'recall',lab:'simulator',audit:'audit','local-ai':'localai',training:'training'})[route?.[2]] || 'read';
   buildMap();
   showReading();
   refreshProgress();
@@ -1495,7 +1505,7 @@ function show() {
 
 function setLessonView(view) {
   mode = view;
-  const suffix = ({b1b:'/animation',recall:'/recall',simulator:'/lab',audit:'/audit',localai:'/local-ai'})[view] || '';
+  const suffix = ({b1b:'/animation',recall:'/recall',simulator:'/lab',audit:'/audit',localai:'/local-ai',training:'/training'})[view] || '';
   history.replaceState(null, '', '#day-' + selected + suffix);
   showReading();
   $('#workspace').scrollIntoView({block:'start'});

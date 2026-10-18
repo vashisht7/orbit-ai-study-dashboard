@@ -302,6 +302,11 @@ Use the model $\hat y=xw$. $x$ is the input, $w$ is the learned weight, and $\ha
 ### Why we need this
 A model needs a way to improve a guess. The loss says how bad the guess is. The gradient says how a tiny weight change affects that loss. The learning rate controls how far we move using that local information.
 
+### Before the math: what forward and backward mean
+Picture a calculation with one adjustable knob, the weight. A **forward pass** puts an input through that calculation to produce a prediction using the current knob setting. We compare it with a known training target to calculate the loss. A **backward pass** then traces the loss's dependence on the weight and computes a gradient. It does not turn the knob. The **optimizer update** uses that gradient and the learning rate to change the knob. Then we predict again.
+
+We need these separate operations because a bad score alone does not tell us how to improve the model. Forward gives the prediction, loss measures it, backward gives local sensitivity, and the update makes the change. “Backward” describes the direction of derivative calculation, not reversing time or asking the model to predict the input. Lesson 7 extends this same sequence to a group of examples called a batch.
+
 ### Derive the loss before inserting numbers
 First define the signed error $e=\hat y-y$. Positive and negative errors can cancel if we simply add them across examples. One useful choice is to square each error:
 
@@ -382,68 +387,125 @@ Horizontal position is the weight; vertical height is the loss. At weight 1, Res
 
 # 07. The training loop, batches and honest evaluation
 
-### The concept: training optimizes a measured objective
-Training repeats a sequence: select data, predict, measure error, differentiate and update parameters. A **batch** is the set of examples processed for one calculation. An **epoch** is one pass through the training dataset. A **step** usually means one optimizer update; it need not mean one example or one epoch.
+### The concept: learn from a small group, then adjust
+In Lesson 6, one example helped us adjust one weight. Now imagine a workbench with several example cards. Each card contains an **input** and the **target**, the answer supplied by our training data. We want one shared model to work on many cards, not only the last card it saw.
 
-The objective must match the output. Lesson 6 predicted a number and used squared error. A language model predicts a distribution over next tokens, so we usually score how much probability it assigns to each correct next token.
+A **dataset** is the collection of example cards. A **batch** is the group we choose to process together before making an update in this simple training loop. **Batch size** counts examples in that group. It does not count weights, layers or training repetitions. The workbench is an analogy for organizing data; a real model performs numerical operations, not human reasoning about cards.
 
+For this lesson, keep one model: $\hat y=xw$. Input $x$ is supplied, weight $w$ is adjustable, and $\hat y$ is the prediction. Each card also supplies target $y$. The model computes its prediction from $x$ and $w$; it does not secretly read $y$ to produce the answer.
 
 ### Why we need this
-One improvement step is not enough to train a useful model. We need a repeatable learning procedure and a separate way to check whether the improvement transfers to new requests.
+One example may not represent the task. Combining information from several examples gives us a direction that reflects the group's average loss. Batches also let hardware process groups of calculations efficiently and let us choose groups small enough to fit in memory. Neither a larger batch nor more training automatically produces a better model.
 
-### Derive the next-token loss
-For a sequence of correct tokens, the model assigns a conditional probability to each token given the earlier prefix. The probability of the sequence is the product of those conditional probabilities. Maximizing this product encourages the correct sequence.
+### Forward pass: use the current model to make predictions
+A **pass** is one traversal through a calculation. **Forward** means following dependencies from the input toward the output: input → model operations → prediction. We need it because we must know what the current weights actually predict before measuring their performance.
 
-Products of small probabilities become extremely small. A logarithm converts a product into a sum. Negating the log turns maximization into minimization. Therefore the penalty at one position is $-\ln p_t$, where $p_t$ is the probability assigned to the correct target at position $t$. $\ln$ means the natural logarithm.
+For our model, the forward pass is just a multiplication, $\hat y=xw$. In a language model it includes embeddings, attention and other layers, but the purpose is the same: compute an output using the current parameters. Forward computation does not itself change those parameters.
 
-Average the penalties over the $N$ positions we actually score:
+### Loss: give the prediction a measurable score
+We compare each prediction with its training target. Here, signed error is $e_i=\hat y_i-y_i$ and squared loss is $L_i=e_i^2$. Subscript $i$ means “for example number $i$.” Squaring makes both positive and negative errors contribute a nonnegative penalty.
 
-$$ L=-\frac{1}{N}\sum_{t=1}^{N}\ln p_t $$
+For a batch containing $B$ examples, define its **mean loss**:
 
-$L$ is mean cross-entropy for one-hot next-token targets. We add token penalties and divide by their count to control the scale as batch sizes or sequence lengths change. This is not a percentage accuracy. Probability one gives zero penalty; a correct target assigned very small probability gives a large penalty.
+$$ L_{batch}=\frac{L_1+L_2+\cdots+L_B}{B} $$
 
-**Perplexity** is $\exp(L)$ for this mean natural-log loss. Compare it only with the same prediction units and scoring setup; a changed tokenizer changes the units.
+$B$ is batch size. We add each example's loss and divide by the number of examples. That is why it is called an average. We could choose a different loss or reduction, but then we must derive the gradient of that chosen objective.
 
-### Derive the training loop from those dependencies
-The prediction depends on current weights, and loss depends on that prediction. A backward pass applies the chain rule to calculate weight gradients. The optimizer then changes the weights, making a new forward pass necessary for the next step.
+### Backward pass: find how each weight affects that score
+A loss tells us how bad the predictions are, but not which way to change a weight. The **backward pass** computes gradients: the local rates at which the loss would change if we changed each trainable parameter a tiny amount.
 
-In PyTorch, the main operations are `zero_grad`, forward computation, loss computation, `backward`, and `step`. Gradients accumulate by default, so clear them before a fresh update unless intentionally accumulating. You may clear before the forward pass or before `backward`; what matters is the intended accumulation boundary. `backward` calculates gradients; `step` applies the optimizer's update.
+It starts at the loss and follows the calculation's dependencies in reverse. This direction is useful because the loss depends on the output, which depends on earlier operations and their weights. The chain rule links those local dependencies. It is not running the prediction in reverse to recover the input, and it is not sending the correct answer backward as new input data.
 
-For language modeling, the input tokens and targets are shifted: a position sees the prefix and predicts the following token. A causal mask prevents using later inputs. A **loss mask** separately decides which targets count toward the objective. Excluding prompt targets from the loss does not remove the prompt from the model's input.
+For each example from Lesson 6:
 
-### What is chosen versus learned?
-Batch size, learning rate, epochs, optimizer and data splits are chosen. Weights are learned. Loss and evaluation metrics are computed. With equally sized microbatches averaged consistently, effective batch size is microbatch size times accumulation steps times data-parallel workers. Unequal scored-token counts require appropriate weighting.
+$$ g_i=\frac{dL_i}{dw}=2(x_iw-y_i)x_i $$
 
-### Worked example: training success is not generalization
+Differentiation distributes over addition, and the constant $1/B$ remains a multiplier. Therefore the gradient of our mean loss is:
+
+$$ g_{batch}=\frac{g_1+g_2+\cdots+g_B}{B} $$
+
+All examples in this batch use the **same current weight**. We combine their gradients before changing it. If we updated after each card instead, later cards would use different weights; that would be a different training procedure.
+
+### Optimizer update: now change the weight
+The backward pass supplies the gradient. The **optimizer** is the rule that uses it to change parameters. Our optimizer is plain gradient descent:
+
+$$ w_{new}=w_{old}-\eta g_{batch} $$
+
+$\eta$ is the learning rate, the chosen multiplier controlling the size of this update. This is the moment the model's weight changes. A new forward pass is needed to see what the new weight predicts; an old prediction does not automatically recalculate itself.
+
+The complete loop is **choose a batch → forward predictions → loss → backward gradients → optimizer update → repeat**. During ordinary inference, you only need to make predictions; there is no training target, backward pass or weight update.
+
+### Worked example: two cards, one shared update
+Imagine a toy model estimating material needed from a measured length. This is an arithmetic illustration. Our two training cards are $(x=1,y=3)$ and $(x=2,y=6)$. Start at $w=1$.
+
+| Operation | Card 1 | Card 2 |
+|---|---|---|
+| Forward prediction $xw$ | $1\times1=1$ | $2\times1=2$ |
+| Error $xw-y$ | $1-3=-2$ | $2-6=-4$ |
+| Squared loss | $(-2)^2=4$ | $(-4)^2=16$ |
+| Weight gradient $2(xw-y)x$ | $2(-2)(1)=-4$ | $2(-4)(2)=-16$ |
+
+The mean loss is $(4+16)/2=10$. The mean gradient is $(-4-16)/2=-10$. At learning rate $0.1$, the update gives $w_{new}=1-0.1(-10)=2$.
+
+Run another forward pass: predictions are now $2$ and $4$. The new losses are $1$ and $4$, so the mean is $2.5$. The shared weight improved this batch's loss from $10$ to $2.5$. We did not change either target.
 
 ```python
-train = [("remind me at six", "reminder"),
-         ("save this thought", "note")]
-test = [("could you nudge me at six", "reminder"),
-        ("save this thought", "note")]
-def predict(text):
-    return "reminder" if "remind" in text else "note"
-def accuracy(rows):
-    return sum(predict(x) == y for x, y in rows) / len(rows)
-print(accuracy(train), accuracy(test))  # 1.0 0.5
+# A two-example batch. This is a real update of one scalar weight.
+examples = [(1.0, 3.0), (2.0, 6.0)]
+w = 1.0
+learning_rate = 0.1
+for step in range(3):
+    losses = []
+    gradients = []
+    for x, target in examples:
+        prediction = x * w                 # forward pass
+        error = prediction - target
+        losses.append(error ** 2)
+        gradients.append(2 * error * x)     # backward calculation
+    loss = sum(losses) / len(examples)
+    gradient = sum(gradients) / len(examples)
+    print(step, round(w, 3), round(loss, 3), round(gradient, 3))
+    w = w - learning_rate * gradient        # optimizer update
 ```
 
-This lab trains no weights; it evaluates a fixed rule to isolate the evaluation idea. The rule gets both training cases right, but misses the paraphrased reminder in the test set, giving `1.0` and `0.5`. The repeated note appears in both sets, so this is a demonstration, not a clean independent benchmark.
+The first printed row is `0 1.0 10.0 -10.0`: update index, current weight, mean loss, and mean gradient **before** the update. The next rows are `1 2.0 2.5 -5.0` and `2 2.5 0.625 -2.5`. This lab really changes one weight. The visual uses these same equations rather than invented measurements.
 
-An honest experiment splits by the source of possible leakage: document, conversation, person or time as appropriate. Use training data for fitting, validation for choosing settings, and a held-out test for final assessment. Repeatedly selecting changes using a test score gradually turns that test into a validation set.
+### Batch, step and epoch: three different ways of counting
+A **batch** is a group of examples. In this lesson, a **step** means one optimizer update after processing that group. An **epoch** means passing through the whole training dataset once.
 
+Imagine six training cards and batch size two. Process cards 1–2 and update: step one. Process cards 3–4 and update: step two. Process cards 5–6 and update: step three. All six cards have now been used once: one epoch is complete. A second epoch revisits them, commonly in a shuffled order, using the weights reached so far.
+
+With $D$ examples, batch size $B$, one update per batch and a retained smaller last batch, updates per epoch are $\lceil D/B\rceil$. The ceiling symbol means round upward. Five cards at batch size two produce batches of two, two and one: three updates. Implementations may instead drop the incomplete batch; check the setting.
+
+Our tiny lab deliberately reuses the same two-card batch three times. Because those two cards are its entire dataset, it performs three updates and three epochs. That equality would not hold for the six-card example.
+
+### Check whether learning transfers beyond practice cards
+Reducing training loss means fitting the examples used for updates. It does not prove that unfamiliar requests will work. A model can memorize narrow patterns or exploit accidental clues.
+
+**Training data** changes weights. **Validation data** helps choose settings and checkpoints without being used for those gradient updates. A **held-out test set** assesses the final choice. If you repeatedly change your model based on test results, those results are functioning as validation instead of an untouched final check.
+
+For a NoteEchoes-style project, keep related conversations and near-duplicate phrasings together when splitting data. Test new phrasing, names, dates and ambiguous requests. The two-card calculation above demonstrates learning mechanics, not generalization evidence.
+
+### Later bridge: how this becomes language-model training
+For text, an example can contain many token positions. A model sees earlier tokens and predicts the next token. Instead of squared error on a scalar answer, next-token training usually uses **cross-entropy**: at each scored position, assign penalty $-\ln p$, where $p$ is the probability the model assigned to the correct token and $\ln$ is the natural logarithm. Higher probability for that target gives a smaller penalty.
+
+You can return to this paragraph later. First be able to trace the two-card loop. A batch size of two text examples is not necessarily two scored tokens: each example may contain many positions. Padding, loss masks and unequal sequence lengths affect which positions contribute to the average.
+
+Framework names are shorthand for the operations you now know: `forward` computes outputs, `backward` calculates gradients, and the optimizer's `step` updates parameters. Many frameworks accumulate gradients, so `zero_grad` clears previous gradients before a fresh accumulation. **Gradient accumulation** deliberately combines several smaller batches before an update; our one-batch-per-step counting assumes it is not being used.
 
 ### What changes when you use it
-More updates can lower training loss while worsening performance on independent inputs. Batches change how gradients are estimated and how work is grouped. A cleaner split changes the credibility of your measurement, not the model's architecture.
+Forward calculation changes the values of predictions and intermediate results, not the weights. Backward calculation produces gradients, not updated weights. The optimizer changes weights. Batch size changes how many examples contribute to the grouped calculation. More epochs mean revisiting the dataset more times; they do not guarantee better performance on unseen inputs.
+
 ### A project connection
-Illustration for NoteEchoes adaptation: fit on training conversations, choose settings using separate validation conversations, then evaluate held-out requests. Keep near-duplicate conversations together so memorization does not masquerade as generalization.
+Illustration for NoteEchoes adaptation: training examples pair requests with desired response tokens. A forward pass assigns next-token probabilities, loss scores the target tokens, backward computation supplies gradients for trainable parameters, and the optimizer updates them. With LoRA, the selected adapter parameters change while the base parameters remain frozen. You can understand that distinction now without learning the full adapter derivation yet.
+
 ### Read the visual
-Follow Split → Train → Validate → Test. Pause and explain which data each stage may use and why using test results to choose settings changes the evaluation contract. The marker shows the order of responsibilities; this walkthrough does not plot or measure a real training run.
+Use the “See one training update” walkthrough near the start of the [online lesson](https://vashisht7.github.io/orbit-ai-study-dashboard/index.html#day-7). Start with one example, then select two. At every stage read the caption and observe the weight: it stays at 1 throughout forward and backward calculation, changes only at Update, and is then used for a new prediction. Backward arrows show derivative dependencies, not reversed input data. Play advances explanatory scenes; Next lets you control the pace.
 
 ### Check your understanding
-**Question:** Why can training loss fall without useful performance improving?
+**Question:** With six examples, batch size two and one update per batch, how many updates make one epoch? Which operation changes the weights?
 
-**Answer:** The model can fit patterns specific to the training data, including duplicates or accidental shortcuts. Independent evaluation measures whether useful behavior transfers. A low next-token loss also does not prove that application actions are correct or authorized.
+**Answer:** Three updates make one epoch when all six examples are visited once. The optimizer update changes the weights. Forward computation makes predictions, loss scores them, and backward computation calculates gradients. If you cannot yet explain those distinctions, revisit the visual before moving to token-loss formulas.
 
 # 08. Neural networks and autograd, one layer at a time
 
@@ -455,6 +517,11 @@ A **neural network** composes layers with learned parameters. A **hidden represe
 
 ### Why we need this
 Many useful relationships cannot be described by one weighted sum. Nonlinear layers let a network represent input-dependent behavior, and autograd makes its many connected derivatives practical to calculate.
+
+### Connect this to the passes you already know
+A **layer** is one stage of the model's calculation. A **forward pass** visits those stages from input to prediction. Intermediate values are often called **activations**. A **backward pass** follows the dependencies in reverse to compute loss gradients. The optimizer then updates trainable parameters. Adding layers makes the route longer; it does not change these three jobs.
+
+For this lesson, focus first on tracing one input through the two layers. You can revisit the derivative formula after the forward route makes sense. **Autograd** means software applies automatic differentiation to the recorded calculation; it is the same chain-rule reasoning from Lesson 6, organized for many operations.
 
 ### Derive why linear layers alone collapse
 For a scalar input, let $h=ax+b$ and $\hat y=ch+d$. Substitute the first expression into the second:
