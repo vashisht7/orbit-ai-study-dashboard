@@ -63,3 +63,18 @@ The page starts with one goal, a reason to learn it and a stopping point. Extra
 practice, project views and tool controls use expandable sections. The dedicated
 animation tab remains directly available. Validate chapter boundaries (1, 9, 14,
 21, 27), all 30 goals, optional-view entry points and saved notes when editing.
+
+## Reading layout and Focus mode
+
+`reading-layout.css` owns dashboard header/toolbar positioning and responsive Focus
+layout. Keep the progress track inside `.bookbar`; it must not have an independent
+sticky offset. Header and toolbar sizes are observed in `orbit.js` and supply
+scroll offsets for section links. Focus hides the surrounding dashboard, preserves
+the current reading block, and exits through its button or Escape. The tools menu
+is a bounded dropdown, not extra content inside a fixed-height header.
+
+Layout verification: test 1440, 820, 390 and 320 px widths; open/close Tools;
+enter Focus, scroll into a later section, exit by button and Escape; check the
+progress line is at the toolbar bottom and the exit button remains in view.
+Switch Read, Animation, Recall and Local AI while focused. Compare notes and task
+checks before/after. No horizontal page overflow or browser errors should occur.

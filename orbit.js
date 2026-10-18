@@ -1548,15 +1548,48 @@ $('#resume').onclick = () => { navigate(DAYS.find(d => !state.days[d.day]?.check
 $('#map-prev').onclick = () => $('#level-map').scrollBy({ left: -420, behavior: 'smooth' });
 $('#map-next').onclick = () => $('#level-map').scrollBy({ left: 420, behavior: 'smooth' });
 
-// Focus Reading Mode Toggle
-$('#focus-btn').onclick = () => {
-  isFocusMode = !isFocusMode;
-  $('#workspace').classList.toggle('focus-mode', isFocusMode);
-  $('#focus-btn').classList.toggle('active', isFocusMode);
-  $('#focus-btn').innerHTML = isFocusMode
-    ? '<span class="focus-icon">✕</span> Exit Focus'
-    : '<span class="focus-icon">🎯</span> Focus';
-};
+// Keep reading controls aligned with the actual header and toolbar heights.
+function updateReadingOffsets() {
+  const headerHeight = isFocusMode ? 0 : $('.topbar').getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--study-header-height', `${headerHeight}px`);
+  document.documentElement.style.setProperty('--study-toolbar-height', `${$('.bookbar').getBoundingClientRect().height}px`);
+}
+const readingLayoutObserver = new ResizeObserver(updateReadingOffsets);
+readingLayoutObserver.observe($('.topbar'));
+readingLayoutObserver.observe($('.bookbar'));
+
+function setReadingFocus(enabled) {
+  const toolbarBottom = $('.bookbar').getBoundingClientRect().bottom;
+  const anchor = [...$('#reading').children].find(el => {
+    const box = el.getBoundingClientRect();
+    return box.height > 0 && box.bottom > toolbarBottom + 8 && box.top < innerHeight;
+  });
+  isFocusMode = enabled;
+  $('.study-tools').open = false;
+  document.body.classList.toggle('reading-focus', enabled);
+  $('#workspace').classList.toggle('focus-mode', enabled);
+  $('#focus-btn').classList.toggle('active', enabled);
+  $('#focus-btn').setAttribute('aria-pressed', String(enabled));
+  $('#focus-btn').innerHTML = enabled
+    ? '<span class="focus-icon" aria-hidden="true">✕</span> Exit Focus'
+    : '<span class="focus-icon" aria-hidden="true">▣</span> Focus';
+  updateReadingOffsets();
+  requestAnimationFrame(() => {
+    (anchor || $('#workspace')).scrollIntoView({block:'start', behavior:'instant'});
+  });
+}
+$('#focus-btn').onclick = () => setReadingFocus(!isFocusMode);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (isFocusMode) setReadingFocus(false);
+    $('.study-tools').open = false;
+    $('.extra-views').open = false;
+  }
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.study-tools')) $('.study-tools').open = false;
+  if (e.target.closest('.study-tools .nav-pill, .study-tools #menu, .study-tools #job-audit-pill')) $('.study-tools').open = false;
+});
 
 // Sound Toggle
 $('#sound-btn').onclick = () => {
