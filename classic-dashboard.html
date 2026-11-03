@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07090e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Orbit · Your AI Engineering Odyssey</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="reader/vendor/katex.min.css">
+  <link rel="stylesheet" href="orbit.css?v=dark-reader-2">
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="learning-guides.css?v=dark-reader-2"><link rel="stylesheet" href="reading-layout.css?v=dark-reader-2"><script defer src="dashboard.bundle.js?v=dark-reader-2"></script><link rel="stylesheet" href="training-story.css?v=dark-reader-2"><link rel="stylesheet" href="textbook.css?v=dark-reader-2"></head>
+<body class="study-dashboard">
+  <a class="skip" href="#reading">Skip to reading</a>
+  <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
+  <header class="topbar">
+    <div class="top-brand-group">
+      <a class="brand" href="#day-1">
+        <span class="brandmark">◈</span> orbit
+        <span class="brandby">/ AI ENGINEERING</span>
+      </a>
+    </div>
+
+    <details class="study-tools"><summary>Tools & saved progress</summary>
+    <div class="study-tools-panel">
+    <!-- Gamified Player Bar -->
+    <div class="gamify-bar" id="gamify-bar">
+      <!-- Streak Pill -->
+      <div class="stat-pill streak-pill" id="streak-pill" title="Consecutive daily study streak">
+        <span class="flame-icon">🔥</span>
+        <b id="streak-val">1</b>
+        <span class="pill-label">day streak</span>
+      </div>
+
+      <!-- Player XP & Rank Pill -->
+      <div class="stat-pill xp-pill" id="xp-pill" role="button" tabindex="0" title="Click to inspect Rank & XP breakdown">
+        <span class="rank-badge-icon" id="rank-icon">⚡</span>
+        <div class="xp-details">
+          <div class="rank-name-row">
+            <span class="rank-title" id="rank-title">Neuron Novice</span>
+            <span class="rank-lvl" id="rank-lvl">LVL 1</span>
+          </div>
+          <div class="xp-bar-track">
+            <div class="xp-bar-fill" id="xp-fill"></div>
+          </div>
+        </div>
+        <span class="xp-text" id="xp-text">0 / 250 XP</span>
+      </div>
+    </div>
+
+    <div class="topright">
+      <!-- Achievements Showcase Button -->
+      <button id="achievements-btn" class="icon-action" aria-label="Open achievements and badges" title="Badges & Achievements">
+        <span class="action-icon">🏆</span>
+        <span id="badge-count-badge" class="badge-counter">0/12</span>
+      </button>
+
+      <button id="job-audit-pill" type="button" class="nav-pill" title="Visual gallery and job readiness audit">🎬 <span>Gallery &amp; Job Audit</span></button>
+      <a class="nav-pill" href="practice.html" title="Python editor + test cases">⌨️ <span>Code Lab</span></a>
+      <a class="nav-pill" href="ai-depth/index.html#overview" aria-label="Separate résumé study track" title="Additional study based on your résumé">📚 <span>Résumé track</span></a>
+      <a class="nav-pill" href="visual-map.html" title="Diagrams of the whole course">🗺️ <span>Visual map</span></a>
+      <a class="nav-pill" href="ai-vocabulary.html" aria-label="AI vocabulary and formula cheat sheet" title="AI vocabulary, tensor shapes and formulas">📐 <span>Cheat sheet</span></a>
+
+      <!-- Audio Mute/Unmute Toggle -->
+      <button id="sound-btn" class="icon-action" aria-label="Toggle sound effects" title="Sound feedback (on/off)">
+        <span id="sound-icon" class="action-icon">🔊</span>
+      </button>
+
+      <span id="saved" class="save-status">Saved on this browser</span>
+      <button id="menu" class="icon" aria-label="Open library and resources" aria-expanded="false" aria-controls="library">
+        <span></span><span></span>
+      </button>
+    </div>
+    </div>
+    </details>
+  </header>
+
+  <main>
+    <section class="journey">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">YOUR NEXT CHAPTER</p>
+          <h1>One useful idea.<br><span>At your pace.</span></h1>
+          <p class="intro">Five chapters. Thirty lessons. No deadline.<br>Learn one idea, try it, then explain it in your own words.</p>
+        </div>
+        <div class="mastery" title="Lessons whose reading you marked complete; a self-report, not a test score">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ringbase" cx="60" cy="60" r="51"/>
+            <circle id="ring" cx="60" cy="60" r="51"/>
+          </svg>
+          <div>
+            <b id="overall">0</b>
+            <span>READINGS CHECKED</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="chapter-browser"><summary>Explore the five chapters · optional 30-session plan</summary>
+      <div class="journey-head">
+        <div>
+          <p class="eyebrow" id="stage"></p>
+          <h2>Your learning path</h2>
+        </div>
+        <div class="journey-actions">
+          <button id="resume" class="subtle highlight-pulse">Continue reading ↗</button>
+        </div>
+      </div>
+
+      <nav class="week-tabs" aria-label="Journey stages" id="weeks"></nav>
+
+      <div class="map-wrap">
+        <button class="map-arrow" id="map-prev" aria-label="Scroll learning path left">←</button>
+        <div id="level-map" class="level-map" role="navigation" aria-label="Choose a lesson"></div>
+        <button class="map-arrow" id="map-next" aria-label="Scroll learning path right">→</button>
+      </div>
+      <div class="map-caption">
+        <span>Thirty sessions is a suggestion. Repeat a lesson whenever it helps.</span>
+        <span id="total-tasks">0 / 180 tasks</span>
+      </div>
+      </details>
+    </section>
+
+    <section id="day-panel" class="day-panel">
+      <div class="day-heading">
+        <div>
+          <p class="eyebrow" id="day-kicker"></p>
+          <h2 id="day-title"></h2>
+          <p id="day-subtitle"></p>
+        </div>
+        <div class="day-progress">
+          <strong id="day-percent">0%</strong>
+          <span id="day-count">0 of 6 complete</span>
+          <div class="day-progress-track"><i id="day-fill"></i></div>
+        </div>
+      </div>
+
+      <section id="session-goal" class="session-goal" aria-label="Your learning goal"></section>
+      <div class="workspace" id="workspace">
+        <article class="book" id="book-panel">
+          <div class="bookbar">
+            <div class="read-progress-track" aria-hidden="true"><div id="read-progress-bar" class="read-progress-bar"></div></div>
+            <div class="view-tabs" role="group" aria-label="Lesson view">
+              <button id="read-tab" aria-pressed="true">📖 Read & experiment</button>
+              <button id="b1b-tab" aria-pressed="false">🎬 Lesson animation</button>
+              <button id="interview-tab" aria-pressed="false">🧠 Recall</button>
+              <details class="extra-views"><summary>Apply it to a project · optional</summary>
+              <button id="localai-tab" aria-pressed="false">⚡ Local AI lesson</button>
+              <button id="simulator-tab" aria-pressed="false">⚡ NoteEchoes Lab</button>
+              </details>
+            </div>
+            <div class="bookbar-right">
+              <span id="readtime-left" class="readtime-ticker">⏱️ 4 min left</span>
+              <button id="focus-btn" class="focus-btn" aria-pressed="false" title="Toggle distraction-free Focus Mode">
+                <span class="focus-icon">🎯</span> Focus
+              </button>
+            </div>
+          </div>
+
+          <div id="reading" tabindex="-1"></div>
+
+          <div class="lesson-footer">
+            <button id="finish-reading" class="primary">
+              <span class="check-icon">✓</span> I can explain this lesson (+100 XP)
+            </button>
+            <button id="next-day" class="subtle">Next lesson, when ready →</button>
+          </div>
+        </article>
+
+        <aside class="mission" id="mission-panel">
+          <div class="mission-header">
+            <p class="eyebrow">YOUR TAKEAWAY</p>
+            <h3>What can you explain now?</h3>
+          </div>
+          <p class="mission-intro">A few sentences are enough. Explain the idea, why it helps, and what changes when you use it.</p>
+
+          <details class="optional-practice"><summary>Optional practice & Local AI · choose only what helps</summary>
+          <p>You do not need to complete these activities to move on. Coding and system design can be separate study sessions.</p>
+          <div id="spotlight-card"></div>
+          <div id="checklist"></div>
+          </details>
+
+          <div class="evidence">
+            <p class="eyebrow">MAKE IT YOURS</p>
+            <p id="evidence"></p>
+            <label for="notes">One idea in my own words</label>
+            <textarea id="notes" rows="4" placeholder="What is the idea? Why do we need it? What would change if I adjusted one thing? What is still unclear?"></textarea>
+          </div>
+          <p class="quiet">Progress lives in this browser. Use Library → Save progress to keep a backup.</p>
+        </aside>
+      </div>
+    </section>
+
+    <footer>
+      Made for Vashisht · Understanding beats finishing fast.<br>
+      <span>Practice builds readiness; a completed checklist is not an interview guarantee.</span>
+    </footer>
+  </main>
+
+  <!-- Library Modal -->
+  <dialog id="library">
+    <div class="drawer-head">
+      <div>
+        <p class="eyebrow">YOUR LIBRARY</p>
+        <h2>Everything, in its place.</h2>
+      </div>
+      <button id="close-menu" class="icon" aria-label="Close library">✕</button>
+    </div>
+    <p class="quiet">Your current lesson stays on the main page. These are here when you need them.</p>
+    <nav class="library-links">
+      <a href="practice.html"><b>⌨️ Code Lab</b><span>84 coding problems with company sources, explanations and tests ↗</span></a>
+      <a href="practice.html?tab=terminal"><b>🖥️ Python terminal</b><span>Run any Python in your browser ↗</span></a>
+      <a href="visual-map.html"><b>🗺️ Visual map</b><span>Diagrams of the whole course, pipelines and quantization chart ↗</span></a>
+      <a href="AI_Textbook.pdf" download><b>Original book</b><span>Download the original PDF ↗</span></a>
+      <a href="beginner/Beginner_AI_Engineering.pdf" download><b>Expanded beginner book</b><span>Plain-language explanations, math and code ↗</span></a>
+      <a href="NoteEchoes_AI_Cheatsheet.pdf" download><b>Interview cheat sheet</b><span>Download the concise PDF ↗</span></a>
+      <a href="model-process.html"><b>Inside NoteEchoes</b><span>Model, training pipeline, evaluation and metrics ↗</span></a>
+      <a href="interviews.html"><b>Interview question bank</b><span>Explain, diagnose and defend your choices ↗</span></a>
+      <a href="reader/index.html"><b>Advanced reference</b><span>Deeper existing chapters and laboratories ↗</span></a>
+      <a href="beginner/Beginner_Labs.zip" download><b>All beginner labs</b><span>Python exercises and the tiny transformer ↗</span></a>
+      <a href="beginner/references.html"><b>Sources & scope</b><span>Primary references and evidence boundaries ↗</span></a>
+    </nav>
+    <div class="backup">
+      <button id="export" class="subtle">Save progress</button>
+      <label class="subtle" for="import">Restore progress<input type="file" id="import" accept="application/json,.json" hidden></label>
+    </div>
+    <p id="backup-status" role="status"></p>
+  </dialog>
+
+  <!-- Achievements Showcase Modal -->
+  <dialog id="achievements-modal" class="game-dialog">
+    <div class="drawer-head">
+      <div>
+        <p class="eyebrow">ENGINEERING HONORS</p>
+        <h2>Achievements & Badges</h2>
+      </div>
+      <button id="close-achievements" class="icon" aria-label="Close achievements">✕</button>
+    </div>
+    <div class="achieve-summary">
+      <div class="achieve-stat-card">
+        <span class="achieve-stat-num" id="achieve-unlocked-count">0</span>
+        <span class="achieve-stat-lbl">Unlocked</span>
+      </div>
+      <div class="achieve-stat-card">
+        <span class="achieve-stat-num" id="achieve-total-xp">0</span>
+        <span class="achieve-stat-lbl">Total XP Earned</span>
+      </div>
+      <div class="achieve-stat-card">
+        <span class="achieve-stat-num" id="achieve-current-rank">Neuron Novice</span>
+        <span class="achieve-stat-lbl">Current Title</span>
+      </div>
+    </div>
+    <div class="badge-grid" id="badge-grid"></div>
+  </dialog>
+
+  <!-- Toast Notification -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <!-- Floating XP popup container -->
+  <div id="xp-float-container" class="xp-float-container" aria-hidden="true"></div>
+
+  <!-- Unlocked Celebration Banner -->
+  <div id="celebration-banner" class="celebration-banner" aria-live="assertive">
+    <div class="banner-content">
+      <span class="banner-icon">🎖️</span>
+      <div>
+        <strong id="banner-title">Achievement Unlocked!</strong>
+        <p id="banner-desc">You earned a new milestone badge.</p>
+      </div>
+    </div>
+  </div>
+
+  <noscript>This course needs JavaScript. You can still open <a href="beginner/Beginner_AI_Engineering.pdf">the beginner PDF</a>.</noscript>
+</body>
+</html>

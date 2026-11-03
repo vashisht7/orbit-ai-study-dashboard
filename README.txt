@@ -1,3 +1,49 @@
+Mechanism animation update (November 3, 2026)
+Inside the model now provides a computed Transformer architecture view with
+residual bypasses, two-head attention with a causal-mask heatmap, an inspectable
+feed-forward neuron network (4 -> 8 -> 4), and real browser bigram training.
+The Watch tabs for model-internals lessons open these specialized views.
+All displayed matrices, weighted sums, activations, and losses are calculated.
+Fixed teaching weights are clearly separate from live trained weights.
+
+Train a small model -> Write it yourself provides a starter notebook with seven
+unfinished implementation exercises, a reference notebook, shape/causality
+checks, controlled learning-rate experiments, plots, generation, and export.
+Use local JupyterLab, VS Code notebooks, or Colab; full PyTorch execution occurs
+there, not in the static dashboard. The browser bigram model is explicitly not
+a Transformer. No extra animation plugin is needed.
+Rebuild notebook artifacts and ZIP: node tools/build_learning.cjs.
+Check browser math: node tools/check_mechanisms.cjs.
+Check notebook code: python tools/check_transformer_notebooks.py (PyTorch,
+Matplotlib and nbformat required). Original readers and progress are retained.
+
+Orbit AI notebook — two connected learning paths (November 3, 2026)
+
+Open index.html for the simplified dashboard. It works locally without a build.
+1. Learn AI: 30 lessons, plain-language explanations, sketch-style animated
+   flows, small Python examples, quizzes, and personal notes.
+2. Interview preparation: six resume project routes and 28 concept deep dives,
+   linked back to beginner explanations and hands-on lessons.
+3. Train a small model: a downloadable CPU PyTorch workshop with explained
+   source, custom text input, held-out loss, checkpoints, resume, generation,
+   and a local metrics-file chart. Actual model training runs in Python.
+
+The sidebar collapses using the top-left button. Each lesson has Understand,
+Watch, Try & code, and Explain steps. Animations have play/pause, step, reset,
+and speed controls. Attention/softmax and gradient lessons include live numeric
+experiments. Notes and practiced flags use orbit-two-paths-v1 browser storage;
+Save progress exports them and Restore progress merges them. Original progress
+is untouched and remains available in classic-dashboard.html.
+
+The original dashboard and all reference readers remain available. The new
+resume routes reuse ai-depth/resume-path.js; reported resume metrics retain
+their original scope and should be supported by the learner's own evidence.
+Maintain the small-model workshop in learning/model-workshop/. Regenerate its
+embedded source with node tools/build_learning.cjs after changing source files.
+The training checkpoint test is tools/check_model_workshop.py (needs PyTorch).
+
+Earlier dashboard notes follow; their original daily UI is now classic-dashboard.html.
+
 Vashisht AI Interview Study Dashboard
 
 Open index.html in Arc or another browser. Keep all files in this folder together.

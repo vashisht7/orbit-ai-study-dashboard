@@ -1,9 +1,9 @@
 {
-  "name": "Orbit · AI Engineering Study Dashboard",
+  "name": "Orbit \u00b7 AI Engineering Study Dashboard",
   "short_name": "Orbit AI",
-  "description": "30-day first-principles AI Engineering curriculum with 3Blue1Brown interactive visualizers, 28 resume deep dives, and 84 Python Code Lab exercises.",
+  "description": "Two connected paths: learn AI with sketch animations and simple labs, prepare for resume-based interviews, and train a tiny Transformer.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#07090e",
-  "theme_color": "#07090e"
+  "background_color": "#f7f6f2",
+  "theme_color": "#f7f6f2"
 }
