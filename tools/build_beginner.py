@@ -40,7 +40,7 @@ def build():
         options = options[offset:] + options[:offset]
         meaning = {}
         for key, heading in [('why', 'Why we need this'), ('change', 'What changes when you use it'), ('project', 'A project connection'), ('watch', 'Read the visual')]:
-            match = re.search(r'^### ' + re.escape(heading) + r'\n(.*?)(?=^### |\Z)', body, re.M | re.S)
+            match = re.search(r'^### ' + re.escape(heading) + r'(?:[^\n]*)\n(.*?)(?=^### |\Z)', body, re.M | re.S)
             assert match and match[1].strip(), (item['id'], heading)
             meaning[key] = match[1].strip()
         item.update(body=body, output=output, meaning=meaning, quiz={

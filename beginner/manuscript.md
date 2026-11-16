@@ -177,12 +177,17 @@ Move temperature while keeping the logits fixed. Compare the probability bars an
 # 04. Build your first language predictor with counts
 
 ### The concept: learning can mean estimating a frequency
+
+Chapter 3 converted scores into probabilities. Now we will obtain probabilities directly from observations: count what followed a token, then divide by the number of opportunities. This gives us a small language model we can inspect completely.
+
 Language prediction asks which token might come next given previous tokens. A **bigram model** makes a simplifying assumption: use only the immediately preceding token as context. A token can be a character in this lesson; it need not be a complete word.
 
 The model learns a table of transition counts from text. At prediction time it looks up the row for the current token. This already separates training, which builds counts, from inference, which uses the table.
 
 
-### Why we need this
+> **Follow the process:** text → neighboring token pairs → counts → probabilities → next-token choice
+
+### Why we need this: turn observations into next-token probabilities
 Counting gives us the smallest transparent example of learning from data. It shows how past observations can become future predictions before we introduce neural-network weights and calculus.
 
 ### Derive the probability from counting
@@ -194,12 +199,46 @@ $P(j\mid i)$ means “probability of next token $j$, given previous token $i$.�
 
 Adding these fractions over all next tokens gives $N_i/N_i=1$. The normalization therefore produces a valid distribution. The assumption is that observed relative frequency is a useful estimate for future inputs from a comparable source.
 
-### Why smoothing changes both numerator and denominator
-A zero count assigns probability zero even when an event is merely unseen. Choose a vocabulary containing $V$ possible next tokens and add a positive pseudo-count $\alpha$ to **each** candidate:
+### Reserve a chance for tokens you have not observed: smoothing
+Suppose our chosen vocabulary contains three possible next tokens: `b`, `c` and `d`. After `a`, we observed `b` three times and `c` once. We have never observed `d` after `a`. Dividing by four gives probabilities of 75%, 25% and 0%.
 
+That zero is a strong claim: this model cannot generate `d` after `a`. But a small training sample may simply have missed that transition. **Smoothing reserves some probability for unseen possibilities.** It does not establish that every possible transition is sensible.
+
+### Add a small count to every candidate, then recompute the total
+Choose a positive number called $\alpha$ (alpha). Add it to every candidate’s count, including candidates with zero observations. These additions are **pseudo-counts**: an assumption we choose, not extra events we observed.
+
+With $\alpha=1$, the calculation looks like this:
+
+| Next token after `a` | Observed count | Add the pseudo-count | Smoothed probability |
+|---|---:|---:|---:|
+| `b` | 3 | 3 + 1 = 4 | 4/7 ≈ 57.1% |
+| `c` | 1 | 1 + 1 = 2 | 2/7 ≈ 28.6% |
+| `d` | 0 | 0 + 1 = 1 | 1/7 ≈ 14.3% |
+| **Total** | **4** | **7** | **100%** |
+
+Read across a row to follow one candidate. Read down the adjusted-count column to find the new denominator. We added one count three times, so the total increased from four to seven. Dividing by the old total would produce probabilities that sum to more than one.
+
+### Read the smoothing formula one symbol at a time
 $$ P(j\mid i)=\frac{C(i,j)+\alpha}{N_i+\alpha V} $$
 
-The denominator grows by $\alpha V$ because we added $\alpha$ exactly $V$ times. $\alpha$ is chosen; counts come from data. Smoothing is an assumption about how to distribute uncertainty, not newly observed evidence. For a completely unseen context, this version gives a uniform distribution over the chosen vocabulary.
+| Symbol | Meaning in words | Value for predicting `d` after `a` |
+|---|---|---|
+| $i$ | The previous token, our context | `a` |
+| $j$ | The next token we are considering | `d` |
+| $C(i,j)$ | How many times this transition was observed | 0 |
+| $N_i$ | Total observed transitions after this context | 4 |
+| $\alpha$ | Pseudo-count added to each candidate | 1 |
+| $V$ | Number of candidates in the chosen vocabulary | 3 |
+| $P(j\mid i)$ | Probability of the next token, given the previous token | 1/7 |
+
+For this row, substitute the numbers: $(0+1)/(4+1\times3)=1/7$. The numerator adjusts one candidate; the denominator accounts for the additions to all candidates.
+
+### Predict what happens when you change alpha
+A small positive alpha keeps the probabilities close to the observed frequencies while giving unseen candidates a small chance. Increasing alpha pulls this distribution toward equal probabilities. If a context has never appeared, all counts are zero and the formula gives $1/V$ for each candidate.
+
+Chapter 3’s temperature changed probabilities derived from scores. Here we adjust a table of counts before normalizing it. Keep the operations separate: **count → add pseudo-counts → divide by the adjusted total**.
+
+We will now build the observed counts from real character pairs. The first code example deliberately shows the unsmoothed counts so you can see exactly which information comes from the text before adding any assumptions.
 
 ### Worked example: inspect the actual transitions
 
@@ -221,11 +260,11 @@ print({char: count / total for char, count in row.items()})
 To implement smoothing, enumerate the complete chosen vocabulary, add $\alpha$ to every count, and use the adjusted total. Adding only to observed entries would leave unseen entries at zero.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Additional observations change relative transition counts. Smoothing redistributes some probability to unseen possibilities. Neither change gives the model access to earlier words that its one-token context discarded.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for your study workflow: build a character predictor from a few action phrases, then try a new phrase. Its failure shows why counting alone is a limited baseline for interpreting varied reminder requests; it does not measure NoteEchoes performance.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Find the missing transition, then increase smoothing. Its probability becomes positive while some observed transitions lose probability. The total must remain one. This is redistribution under a chosen assumption, not newly discovered evidence.
 
 ### Check your understanding
@@ -236,15 +275,20 @@ Find the missing transition, then increase smoothing. Its probability becomes po
 # 05. Turn text into tokens, then into embeddings
 
 ### The concept: text becomes indices before it becomes vectors
+
+The counting model stored a separate row for every previous token. To build a neural model, we first need a consistent way to identify tokens and represent them numerically. We will separate two operations: assigning an ID and looking up a vector.
+
 A neural model operates on numbers. **Tokenization** converts text into a sequence of vocabulary entries and their integer IDs. **Embedding lookup** converts those IDs into learned vectors. These are separate operations, with different purposes.
 
 An ID identifies a vocabulary entry. Its numerical size is not a measure of meaning: token 100 is not necessarily twice as meaningful or more similar to token 50. Treating IDs as quantities would impose an arbitrary relationship on the vocabulary.
 
 
-### Why we need this
+> **Follow the process:** text → tokens → integer IDs → embedding rows
+
+### Why we need this: give each token an address, then a representation
 Neural calculations need numerical vectors, but text begins as symbols. Tokenization supplies stable identities; embedding lookup supplies adjustable representations the model can use in its calculations.
 
-### The rule and what each symbol means
+### Map token IDs to vectors: read the lookup rule
 Let $V$ be vocabulary size and $D$ the embedding width. The embedding table $E$ has shape `[V, D]`. For token ID $t_i$ at position $i$:
 
 $$ h_i=E[t_i,:] $$
@@ -279,11 +323,11 @@ This code builds a character vocabulary from one string, sorts it for a consiste
 There is **no embedding table or trained model in this lab**. To add the next stage, create a `[V, D]` table and look up a row for each ID. Arbitrary initial rows illustrate lookup, but useful representations require learning. Do not rebuild a new ID mapping for each request in a deployed model.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Changing tokenization changes sequence length and IDs. Changing embedding weights changes the vectors selected by those IDs. Swapping only the tokenizer can therefore break a checkpoint even though both components still produce numbers.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes: serialize one request with the model's expected chat template, tokenize it with the matching tokenizer, then inspect the selected embedding rows. Search embeddings require a separate compatible query/document contract.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow an ID to a table row and then to a vector. Nearby ID numbers need not produce nearby meanings. Any visible semantic clusters are a teaching illustration, not a measurement of your checkpoint's embedding geometry.
 
 ### Check your understanding
@@ -294,12 +338,17 @@ Follow an ID to a table row and then to a vector. Nearby ID numbers need not pro
 # 06. Loss and gradients: teach one number to improve
 
 ### The concept: prediction, error and learning are different operations
+
+Embeddings introduced adjustable numbers. How can we choose better numbers? Start with one weight and one prediction. We will measure its error, find which direction reduces that error, and take a small step.
+
 A tiny model is a calculation with an adjustable number. We supply its structure; learning adjusts the number. It does not invent the multiplication rule during this exercise.
 
 Use the model $\hat y=xw$. $x$ is the input, $w$ is the learned weight, and $\hat y$ is the prediction. $y$ is the correct training target. At inference, multiplying the input by the current weight produces the answer. The target is needed to score training, not to calculate a prediction.
 
 
-### Why we need this
+> **Follow the process:** weight + input → prediction → loss → gradient → updated weight
+
+### Why we need this: measure an error before changing a weight
 A model needs a way to improve a guess. The loss says how bad the guess is. The gradient says how a tiny weight change affects that loss. The learning rate controls how far we move using that local information.
 
 ### Before the math: what forward and backward mean
@@ -373,11 +422,11 @@ $$ w_{new}-3=(1-8\eta)(w_{old}-3) $$
 The distance from the optimum shrinks when $|1-8\eta|<1$, giving $0<\eta<0.25$. At `0.125` it reaches the minimum in one step. Between `0.125` and `0.25`, it crosses the minimum but still gets closer. At `0.25`, it oscillates at the same distance. This bound belongs to **this quadratic and this optimizer**; it is not a universal recommended learning rate.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A prediction uses the weight we already have. A training update changes that weight, so the next prediction can differ. A larger learning rate makes the same gradient produce a larger move; it does not make the gradient more accurate. A move can pass the best weight and still improve the loss, or go so far that the loss gets worse.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for training an action model: a training request has a target response. The model assigns probabilities, the loss scores the target, and a backward pass calculates gradients for trainable parameters. An optimizer updates them. Lesson 6's one-number squared-error model teaches that sequence; your language model uses token losses and many weights instead of this exact formula.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Horizontal position is the weight; vertical height is the loss. At weight 1, Reset shows prediction 2 and loss 16. Press Step: weight becomes 2.6 and loss becomes 0.64 at learning rate 0.1. The yellow tangent shows the local slope; the horizontal arrow shows the proposed weight change. Increase the rate above 0.25 and compare successive losses. Those limits apply only to this toy equation. The motion represents weight updates, not physical rolling or a model deciding where to go.
 
 ### Check your understanding
@@ -388,13 +437,18 @@ Horizontal position is the weight; vertical height is the loss. At weight 1, Res
 # 07. The training loop, batches and honest evaluation
 
 ### The concept: learn from a small group, then adjust
+
+Chapter 6 changed one weight using one example. A training loop repeats that same process over groups of examples. Follow one batch first; then distinguish a step from a complete pass through the dataset.
+
 In Lesson 6, one example helped us adjust one weight. Now imagine a workbench with several example cards. Each card contains an **input** and the **target**, the answer supplied by our training data. We want one shared model to work on many cards, not only the last card it saw.
 
 A **dataset** is the collection of example cards. A **batch** is the group we choose to process together before making an update in this simple training loop. **Batch size** counts examples in that group. It does not count weights, layers or training repetitions. The workbench is an analogy for organizing data; a real model performs numerical operations, not human reasoning about cards.
 
 For this lesson, keep one model: $\hat y=xw$. Input $x$ is supplied, weight $w$ is adjustable, and $\hat y$ is the prediction. Each card also supplies target $y$. The model computes its prediction from $x$ and $w$; it does not secretly read $y$ to produce the answer.
 
-### Why we need this
+> **Follow the process:** batch → forward pass → loss → backward pass → update → next batch
+
+### Why we need this: repeat the learning step across examples
 One example may not represent the task. Combining information from several examples gives us a direction that reflects the group's average loss. Batches also let hardware process groups of calculations efficiently and let us choose groups small enough to fit in memory. Neither a larger batch nor more training automatically produces a better model.
 
 ### Forward pass: use the current model to make predictions
@@ -493,13 +547,13 @@ You can return to this paragraph later. First be able to trace the two-card loop
 
 Framework names are shorthand for the operations you now know: `forward` computes outputs, `backward` calculates gradients, and the optimizer's `step` updates parameters. Many frameworks accumulate gradients, so `zero_grad` clears previous gradients before a fresh accumulation. **Gradient accumulation** deliberately combines several smaller batches before an update; our one-batch-per-step counting assumes it is not being used.
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Forward calculation changes the values of predictions and intermediate results, not the weights. Backward calculation produces gradients, not updated weights. The optimizer changes weights. Batch size changes how many examples contribute to the grouped calculation. More epochs mean revisiting the dataset more times; they do not guarantee better performance on unseen inputs.
 
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes adaptation: training examples pair requests with desired response tokens. A forward pass assigns next-token probabilities, loss scores the target tokens, backward computation supplies gradients for trainable parameters, and the optimizer updates them. With LoRA, the selected adapter parameters change while the base parameters remain frozen. You can understand that distinction now without learning the full adapter derivation yet.
 
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Use the “See one training update” walkthrough near the start of the [online lesson](https://vashisht7.github.io/orbit-ai-study-dashboard/index.html#day-7). Start with one example, then select two. At every stage read the caption and observe the weight: it stays at 1 throughout forward and backward calculation, changes only at Update, and is then used for a new prediction. Backward arrows show derivative dependencies, not reversed input data. Play advances explanatory scenes; Next lets you control the pace.
 
 ### Check your understanding
@@ -510,12 +564,17 @@ Use the “See one training update” walkthrough near the start of the [online 
 # 08. Neural networks and autograd, one layer at a time
 
 ### The concept: composition needs a nonlinear operation
+
+You now know how predictions, losses and updates fit together. A neural network makes the prediction calculation richer by composing layers. We will see why a nonlinear operation matters before asking autograd to calculate derivatives.
+
 A linear layer mixes features using multiplication and addition. Stacking such layers without any nonlinear operation does not create a more expressive family of mappings: the stack can be rewritten as one affine layer. A **nonlinearity** lets different input regions follow different relationships.
 
 A **neural network** composes layers with learned parameters. A **hidden representation** is an intermediate result rather than the final output. Training adjusts the parameters of these connected operations using derivatives of the final loss.
 
 
-### Why we need this
+> **Follow the process:** input → linear layer → nonlinear activation → output → loss
+
+### Why we need this: combine learned operations into a network
 Many useful relationships cannot be described by one weighted sum. Nonlinear layers let a network represent input-dependent behavior, and autograd makes its many connected derivatives practical to calculate.
 
 ### Connect this to the passes you already know
@@ -567,11 +626,11 @@ At `x = 0`, the two pre-activations are `-1` and `2`. ReLU gives `[0, 2]`, and s
 The lab performs inference only. There is no optimizer or target. To train it, we would supply targets, define a loss, differentiate and update the listed coefficients.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A nonlinear activation changes which relationships the network can represent. Backward calculation supplies gradients; the optimizer changes parameters. Neither a wider network nor automatic differentiation guarantees that useful behavior will be learned.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for an action model: the significance of a time phrase can depend on nearby negation or intent. Nonlinear feature transformations help represent combinations. This does not mean one hidden unit has an identifiable job called negation.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Compare a purely linear transformation with the nonlinear one. Then follow the backward direction: each local derivative contributes to earlier parameter gradients. The picture simplifies the geometry; it is not a literal map of the features inside your model.
 
 ### Check your understanding
@@ -582,12 +641,17 @@ Compare a purely linear transformation with the nonlinear one. Then follow the b
 # 09. Attention: let one word consult the others
 
 ### The concept: representations need information from context
+
+A network can transform a token vector, but interpreting a word often requires other words. Attention provides a way to choose which available token representations to consult and how much information to take from each.
+
 A token's meaning depends on other tokens. Attention computes a context-dependent mixture of information from visible positions. It does this numerically, using learned projections rather than a hand-written rule naming which word should consult which other word.
 
 Each token representation is projected into a **query** (what to match), a **key** (what can be matched), and a **value** (the information available to mix). These roles are useful interpretations of three learned vector transformations, not guaranteed human-readable fields.
 
 
-### Why we need this
+> **Follow the process:** query + keys → relevance scores → attention weights → weighted values
+
+### Why we need this: let a token gather information from its context
 An isolated token vector does not contain all the context needed to interpret a sentence. Attention provides a learned way to combine information from other allowed positions.
 
 ### Build the rule from one query
@@ -628,11 +692,11 @@ print(output)   # [0.5, 3.0]
 The supplied scores `0` and `ln(3)` exponentiate to `1` and `3`, so their weights are `1/4` and `3/4`. The first output coordinate is `0.25*2 + 0.75*0 = 0.5`; the second is `0.25*0 + 0.75*4 = 3`. This lab starts with scores; it does not calculate learned Q/K projections.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Changing a query-key score changes the mixing weights. Changing a value changes the information mixed. A causal mask removes forbidden contributions. These changes affect the contextual representation before the final prediction.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes: interpreting a date phrase may require the surrounding request. Attention can combine visible context while producing an action response. Which particular heads attend to which words must be inspected; the illustration is not evidence of a specific learned pattern.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Increase one key score and watch its value contribute more to the mixture. Apply the mask and check that the blocked position contributes nothing. A strong score is a numerical match under the learned projections, not proof of a human-readable explanation.
 
 ### Check your understanding
@@ -643,12 +707,17 @@ Increase one key score and watch its value contribute more to the mixture. Apply
 # 10. Assemble a tiny transformer and follow one token
 
 ### The concept: a decoder refines a representation repeatedly
+
+Attention mixes information across tokens. A transformer combines it with feature transformations, normalization and residual additions. Follow the shape of one representation through a block before stacking blocks.
+
 A decoder-only transformer turns token IDs into contextual feature vectors, then into scores for the next token. Attention exchanges information across visible positions. A feed-forward network transforms features within each position. Repeating these operations lets later layers work with representations built by earlier layers.
 
 The architecture defines the operations. Training learns the embedding, projection, normalization and feed-forward parameters. One forward pass computes representations and scores using those current parameters.
 
 
-### Why we need this
+> **Follow the process:** representations → attention + residual → feed-forward + residual → vocabulary scores
+
+### Why we need this: assemble the operations into a transformer
 Attention alone does not describe a complete language model. We need to see how context mixing, feature transformation and vocabulary scoring connect into a repeatable prediction calculation.
 
 ### The block rule and each symbol
@@ -689,11 +758,11 @@ This lab reports `(2, 4, 10)` because there are two sequences, four positions ea
 Decoder-only models predict continuations under a causal mask. Encoder-only models commonly build representations with bidirectional context. Encoder-decoder models use a source encoder and an output decoder. Select the actual architecture rather than applying one diagram to every model.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Each block updates the representation while preserving its outer shape. The vocabulary projection changes features into candidate scores. Selecting and appending a token happens afterward; it is not performed by the residual addition.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes: trace a request through the actual model's tokenizer, blocks and output scores. Use its configuration to label widths and head counts. The tiny workshop shares the broad flow but uses a simpler architecture.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Embed → Attention → Feed-forward → Logits. At each stage, name what the input represents and what the output represents. Attention exchanges context; feed-forward layers transform features. The marker traces a conceptual calculation, not a token physically moving through hardware.
 
 ### Check your understanding
@@ -704,12 +773,17 @@ Follow Embed → Attention → Feed-forward → Logits. At each stage, name what
 # 11. Position, context limits and the KV cache
 
 ### The concept: order and reuse solve different problems
+
+The transformer processes token representations. It also needs information about order, and generation repeatedly revisits earlier context. Position information addresses the first need; the KV cache addresses the second.
+
 Attention needs information about position to represent order. A **context limit** bounds how many positions a model/runtime supports in a request. A **KV cache** stores previously computed keys and values so generation can reuse them. These are related to sequence length, but they are different mechanisms.
 
 Without position information, unmasked self-attention treats a permutation of the input as the same permutation of its outputs. Causal masking adds directional structure, but it is not a replacement for a model's trained positional scheme.
 
 
-### Why we need this
+> **Follow the process:** positions inform attention; stored keys and values are reused on the next step
+
+### Why we need this: preserve order and reuse earlier calculations
 Word order matters, and generating a response repeatedly uses the same prefix. Position information addresses order; caching addresses repeated computation. Neither substitutes for the other.
 
 ### The position rule
@@ -746,11 +820,11 @@ print(memory / 1024**2, "MiB")  # 112.0 MiB
 The illustrative dimensions yield `112 MiB`, dividing bytes by `1024**2`. Doubling tokens doubles this element count; doubling bytes per element does too. The two-byte assumption describes these stored elements, not necessarily the precision used for model weights.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 More cached tokens require more stored K/V elements. Sharing KV heads reduces that component of storage. A larger context budget permits longer input but does not establish that every distant fact will be used correctly.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for running NoteEchoes on a phone: budget weights, cache, temporary buffers and other app memory separately. Increasing conversation length can increase cache use even when the model file is unchanged.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Use the rotation side to see how position affects comparison, and the bars to count cache elements. Changing the head-sharing setting changes the displayed cache estimate. The estimate excludes total application overhead and cannot guarantee a device will avoid memory pressure.
 
 ### Check your understanding
@@ -761,12 +835,17 @@ Use the rotation side to see how position affects comparison, and the bars to co
 # 12. Choose output tokens and understand inference optimizations
 
 ### The concept: token selection and computation speed are separate choices
+
+The model and its cache can now produce vocabulary scores. Generation still needs a rule for choosing the next token. We will first inspect candidate probabilities, then discuss ways to reduce computation.
+
 A forward pass gives next-token scores. A **decoding policy** chooses a token from them. An **execution optimization** changes how the calculation is performed. To understand an inference setting, first identify which of those jobs it changes.
 
 Greedy selection picks a maximum-scoring token. Sampling draws from a probability distribution, often modified by temperature or filters. Greedy selection maximizes the immediate score, not necessarily the probability or usefulness of the complete answer. Beam search keeps several candidate continuations, with its own scoring and resource tradeoffs.
 
 
-### Why we need this
+> **Follow the process:** logits → probabilities → candidate filtering → renormalization → sampling
+
+### Why we need this: choose a token from the model’s output
 A model supplies scores, but a generation loop must choose a next token and eventually stop. Separately, execution methods determine the cost of calculating those scores.
 
 ### Derive top-p sampling
@@ -809,11 +888,11 @@ The input probabilities are already sorted. Starting with `0.60`, adding `0.25` 
 With threshold `0.95`, three candidates suffice. With a fixed top-k value of two, two would always remain regardless of their total mass. That difference explains why the policies behave differently as model confidence changes.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A sampling rule changes which outputs can be selected and how often. An execution optimization can reduce time or memory without intending to change the distribution. Their effects need different measurements.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for an assistant: extraction may benefit from predictable selection, while drafting may allow more variation. Test both against the task. Faster output does not excuse malformed fields or unsupported content.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Scores → Selection → Execution → Stop. Selection decides a token; execution methods calculate efficiently; stopping bounds the loop. Explain those different jobs before changing decoding settings. This walkthrough does not run speculative decoding or measure a speedup.
 
 ### Check your understanding
@@ -824,12 +903,17 @@ Follow Scores → Selection → Execution → Stop. Selection decides a token; e
 # 13. Prompting, context and JSON that deserves checking
 
 ### The concept: define the input contract and the output contract
+
+Token selection produces text, but an application needs useful, well-formed answers. A prompt supplies instructions and context. Validation checks whether the resulting output satisfies the application’s requirements.
+
 A **prompt** supplies instructions and information to a model during inference. It changes the input, not normally the weights. **Context engineering** selects and arranges the information available within the request's length budget. **Structured output** asks for a machine-readable shape so application code can process the response.
 
 These mechanisms address different problems. Clear instructions describe the task. Relevant evidence supplies missing facts. A schema defines fields and types. Application validation establishes whether a particular proposed result is usable.
 
 
-### Why we need this
+> **Follow the process:** instructions + context → generated text → parse → validate → use
+
+### Why we need this: make the input and output contracts explicit
 The model needs a clear task and relevant evidence, while the application needs an output it can inspect. Prompting, context selection and validation address those different needs.
 
 ### Derive the context budget
@@ -870,11 +954,11 @@ print(shape_ok, meaning_ok)  # True False
 This is a small demonstration rather than complete JSON validation: in Python, booleans are also instances of `int`, and the code does not check every field. Production validation should define the precise contract.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Better evidence can improve available information. A stricter schema can prevent certain malformed outputs. Neither proves that a field matches the user's intent or that an action is authorized.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes: a reminder with an integer hour can still contain hour 25, the wrong date or an unapproved destination. Check structure, task meaning and current permission separately before execution.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Instructions → Context → Structured output → Validation. Ask what each stage supplies and what it cannot prove. A correctly shaped response still needs meaning and authority checks. The marker is a conceptual guide, not a running grammar decoder.
 
 ### Check your understanding
@@ -885,12 +969,17 @@ Follow Instructions → Context → Structured output → Validation. Ask what e
 # 14. Embeddings and search: find meaning without exact words
 
 ### The concept: retrieval ranks representations
+
+A prompt has limited room for information. Before filling it, we need a way to find relevant material. We will reuse embeddings as searchable representations and compare their directions.
+
 An **embedding** represents an item as a vector. Semantic retrieval compares a query vector with document vectors to find likely useful candidates. Its quality depends on what the representation was trained to preserve and how we measure similarity.
 
 A vector database adds storage, filtering, indexing and update behavior. It does not make arbitrary vectors semantically compatible. Queries and documents must follow the intended shared representation contract, including compatible encoders, preprocessing and normalization.
 
 
-### Why we need this
+> **Follow the process:** query → query vector → similarity scores → ranked documents
+
+### Why we need this: find relevant text by comparing vectors
 A useful document can use different words from the question. Embedding search supplies candidates by comparing representations, but we need a defined score to know what “near” means.
 
 ### Derive cosine similarity
@@ -927,11 +1016,11 @@ For `[1,0]` and `[1,1]`, the dot product is `1`; lengths are `1` and `sqrt(2)`, 
 Multiplying a candidate vector by a positive constant leaves its cosine unchanged because numerator and denominator scale equally. An unnormalized dot product does change, so metric choice matters.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Cosine removes vector-length effects and compares direction. Changing an encoder can change the coordinate space and therefore the ranking. A faster approximate index can miss candidates even when the representations are good.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for finding saved notes: “car service” may retrieve a note containing “automobile maintenance.” That is a hypothesis to test using relevant-note labels, not a guarantee that every paraphrase will match.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Change document magnitude while keeping its direction fixed: cosine stays unchanged while the dot product changes. The training-step control moves illustrative positive/negative directions according to a script; it is not actually training your embedding model.
 
 ### Check your understanding
@@ -942,12 +1031,17 @@ Change document magnitude while keeping its direction fixed: cosine stays unchan
 # 15. Build RAG from a question and two documents
 
 ### The concept: retrieve information before generating an answer
+
+Chapter 14 found candidate documents. RAG takes the next step: put useful retrieved passages into the model’s context so it can answer using that evidence. Each stage can fail independently.
+
 **Retrieval-augmented generation**, or RAG, supplies retrieved evidence as model input when answering a question. Retrieval changes what information is available during inference. It does not normally update the generator's weights.
 
 The problem has two parts: find relevant evidence, then use it faithfully. A correct generator cannot reliably quote a source passage it never received. A good retriever cannot prevent the generator from misreading the retrieved passage. Evaluate these parts separately.
 
 
-### Why we need this
+> **Follow the process:** question → retrieval → selected passages → prompt → answer with evidence
+
+### Why we need this: supply retrieved evidence to the answer generator
 A model's stored training patterns may not include the private, current document needed to answer a question. RAG supplies selected source evidence during inference instead of expecting the model to recall it.
 
 ### Derive the pipeline from the information dependencies
@@ -986,11 +1080,11 @@ Here the units are whitespace-separated words. Size five and overlap two give st
 The lab only splits text. It performs no embedding, retrieval or generation, and it does not establish an optimal chunk size. Move the overlap assertion before calculating the stride if turning this into a function accepting user input.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Chunking and retrieval change which evidence reaches the generator. More returned chunks can increase coverage but also add irrelevant text. An answer can fail because evidence was missing or because it was used incorrectly.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for your document assistant: retrieve the refund rule together with its exception, keep the source location and ask for a supported answer. If the exception never enters the context, fix that boundary before blaming generation.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Ingest → Chunk and index → Retrieve → Answer and check. Name the evidence artifact at each boundary and where a missing exception would first become visible. The moving marker does not measure recall or simulate a generator; use the written example and case-level tests for those results.
 
 ### Check your understanding
@@ -1001,12 +1095,17 @@ Follow Ingest → Chunk and index → Retrieve → Answer and check. Name the ev
 # 16. Hybrid ranking and knowledge graphs without the hype
 
 ### The concept: different searches preserve different signals
+
+Vector search is one source of candidates. Exact words and explicit relationships can provide other useful evidence. We will combine rankings without assuming their original scores are comparable.
+
 Lexical search compares words or terms. Dense retrieval compares learned vectors. Exact names, identifiers and rare phrases can favor lexical matching; paraphrases can favor dense retrieval. **Hybrid search** combines their candidates rather than assuming either signal always wins.
 
 Their raw scores can have different scales and meanings. Adding those raw scores with equal weights is therefore not automatically meaningful. Rank fusion instead combines relative positions in result lists.
 
 
-### Why we need this
+> **Follow the process:** lexical ranking + vector ranking → rank fusion → selected evidence
+
+### Why we need this: combine complementary retrieval signals
 Exact-term search and meaning-based search can miss different useful documents. Combining their rankings can improve candidate coverage without pretending their raw scores share the same units.
 
 ### Derive reciprocal rank fusion
@@ -1041,11 +1140,11 @@ print(sorted(scores, key=scores.get, reverse=True))
 The code uses `c = 60`, named `k0` in the lab. It learns no parameters and uses no document text. It demonstrates score fusion only; evaluate the final ordering against relevance labels on your own task.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Fusion rewards earlier ranks and repeated appearances across lists. Graph traversal adds explicit relationship paths. Both can change result ordering; neither proves the returned evidence answers the question.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for your search work: use lexical matches for a project ID and dense matches for paraphrased descriptions. Add relationship traversal only if questions about linked people or projects improve enough to justify maintaining the graph.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Lexical search → Dense search → Rank fusion → Optional graph. Explain why lexical and dense signals can differ, why ranks can be combined and when a relationship graph would help. This is a concept walkthrough; calculate actual RRF scores using the written example.
 
 ### Check your understanding
@@ -1056,12 +1155,17 @@ Follow Lexical search → Dense search → Rank fusion → Optional graph. Expla
 # 17. Tools and human review: from a suggestion to an action
 
 ### The concept: a model output describes an operation
+
+So far, the application has mainly returned information. Tools let it change something. We will trace a proposed operation through argument validation and permission checks before any execution occurs.
+
 A **tool call** names an operation and provides arguments. Generating that data does not grant permission or perform the operation. An **executor** is the application component that validates the request and calls an allowed service.
 
 A reliable tool integration needs a contract describing argument types, required fields, units, permissions, side effects and result states. These requirements come from the service and application, not from the model's confidence.
 
 
-### Why we need this
+> **Follow the process:** proposal → validated arguments → permission checks → execution → result
+
+### Why we need this: validate a proposed action before executing it
 An incorrect sentence is one kind of failure; an incorrect external action can alter real data. A tool executor gives the application a boundary at which to validate and authorize proposals.
 
 ### Derive the execution conditions
@@ -1107,11 +1211,11 @@ The first call returns “confirmation required”; the second returns “mock r
 A production contract would also validate text types, lengths, resolved dates and exact resource access. A boolean field saying “confirmed” is not sufficient evidence of user approval unless the application established it through a trusted path.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 The model can propose many operations, but only eligible ones reach the service. A successful check permits an attempt. It does not establish that a later network request succeeded.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes: resolve the intended reminder text, time and calendar, then establish permission and any required confirmation. Record the real outcome. Keep the same operation identity for a safe retry when the service supports it.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Propose → Validate → Approve → Execute and record. Pause before execution and identify the exact arguments, permissions and any required approval. The picture shows required responsibilities; it does not call a reminder service or prove that the checks are implemented.
 
 ### Check your understanding
@@ -1122,12 +1226,17 @@ Follow Propose → Validate → Approve → Execute and record. Pause before exe
 # 18. Agents, memory and surviving a crash
 
 ### The concept: an agent is a decision loop with state
+
+A single tool call is one action. An agent may inspect its result and choose another action. That requires a bounded loop and stored state, especially when a process stops or a request is retried.
+
 An **agent** repeatedly observes state, chooses a next step, receives results and decides whether to continue. It needs explicit goals, allowed operations, stopping conditions and resource budgets. Merely calling a model several times does not establish useful autonomy.
 
 A workflow has predefined transitions; an agent can choose among allowed transitions based on observations. In practice, reliable systems often combine fixed workflow structure with a few model-driven decisions.
 
 
-### Why we need this
+> **Follow the process:** state → choose action → execute → observe → save updated state
+
+### Why we need this: carry state from one decision to the next
 A multi-step task can outlive a network connection or process. Explicit state lets the application decide what remains to do, when to stop and how to investigate an uncertain action.
 
 ### The state-transition rule
@@ -1170,11 +1279,11 @@ The loop allows at most three attempts. Empty evidence keeps it searching; nonem
 The results are supplied in advance. No live search or durable storage occurs, so this illustrates stopping behavior rather than complete crash recovery. To add recovery, persist attempts, evidence and pending operation identities at defined boundaries.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A checkpoint preserves recorded progress, not everything that might have happened remotely. Idempotency or reconciliation addresses the gap between an external effect and saving its receipt. Budgets limit repeated work.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for a reminder workflow: the service creates a reminder just before the worker crashes. On restart, use the same supported operation key or query the outcome instead of blindly creating another reminder.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Observe → Decide → Act → Persist or stop. At Act, consider a crash after a remote effect but before saving a receipt. Explain what is known, what is uncertain and how idempotency or reconciliation would help. The walkthrough does not implement a transaction across those systems.
 
 ### Check your understanding
@@ -1185,12 +1294,17 @@ Follow Observe → Decide → Act → Persist or stop. At Act, consider a crash 
 # 19. Safety and prompt injection in plain language
 
 ### The concept: information does not automatically carry authority
+
+An agent reads tool results and retrieved documents while deciding what to do. Those sources may contain misleading instructions. We will identify where data enters and where the application must enforce authority.
+
 A model may read instructions, user requests, retrieved documents and tool results in the same context. These sources have different trust levels. **Prompt injection** occurs when lower-trust content tries to redirect behavior beyond its authority, for example by telling the assistant to ignore its task and export private information.
 
 The core problem is a trust boundary: text that should be treated as evidence is interpreted as an instruction controlling the application. An attack can be phrased politely and need not contain any particular suspicious word.
 
 
-### Why we need this
+> **Follow the process:** untrusted input → model proposal → independent policy checks → allowed operation
+
+### Why we need this: keep untrusted content from granting permission
 A useful assistant must read text it cannot trust to control the application. Documents can contain instructions, but reading them must not grant new authority over tools or private records.
 
 ### Derive the enforcement rule
@@ -1227,11 +1341,11 @@ Choose an asset to protect, an attacker-controlled surface and a forbidden resul
 Preserve source information so failures can be traced to a document or tool result. Avoid storing private content unnecessarily in prompts, traces or diagnostics; data copied into a new system creates another access boundary.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Application-enforced restrictions keep unauthorized operations blocked even when a model proposes one. The model's response may still be wrong, so protection and useful task completion need separate tests.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for your document assistant: a retrieved page asks to export all notes. Treat that sentence as source content, then let the executor reject any operation outside the user's permitted task and resources.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow External text → Trust boundary → Capability checks → Adversarial tests. At each stage, say whether the information supplies content or authority. The marker illustrates where checks belong; it is not evidence that a particular attack has been blocked in your application.
 
 ### Check your understanding
@@ -1242,12 +1356,17 @@ Follow External text → Trust boundary → Capability checks → Adversarial te
 # 20. MCP and A2A: understand the interface before the acronym
 
 ### The concept: components need a shared communication contract
+
+The preceding chapters established tools, agent state and permission checks. Protocols help separate components exchange requests and results. First understand the information a caller needs; then attach the protocol names.
+
 A **protocol** defines how components exchange messages and interpret their outcomes. It can specify message structures, discovery, lifecycle and error behavior. It does not determine whether the underlying model is intelligent or whether a requested action is permitted.
 
 **MCP**, Model Context Protocol, provides conventions for connecting model applications to capabilities such as tools and resources. **A2A**, Agent2Agent, provides conventions for communicating with agents and their task-oriented capabilities. The exact features and messages depend on the protocol version and implementation.
 
 
-### Why we need this
+> **Follow the process:** discover capabilities → construct request → authenticate and validate → receive result
+
+### Why we need this: describe how separate components communicate
 Components cannot cooperate reliably unless they agree on operation names, arguments, result meanings and failure handling. Protocols provide communication conventions so every integration does not invent them independently.
 
 ### Derive what a caller needs to know
@@ -1286,11 +1405,11 @@ print(valid)  # True
 The lab does not check value types, extra fields, identity, permissions or protocol envelopes, and it sends nothing over a network. It demonstrates one contract check. A real implementation would use the actual SDK/schema and version-specific lifecycle rather than wrapping this dictionary and assuming compatibility.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A shared protocol can reduce custom connection work. It does not automatically supply credentials, resource permission, useful model decisions or safe retry behavior. Those remain explicit integration responsibilities.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for a document tool: the client discovers search, sends a supported query shape and interprets the result under a compatible version. It must also establish that the current user may read each returned document.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Discover → Request → Authorize → Handle result. Explain the information a caller needs at each step. Valid message shape does not imply permission or completion. This walkthrough does not connect to an MCP server or implement the version-specific message exchange.
 
 ### Check your understanding
@@ -1301,12 +1420,17 @@ Follow Discover → Request → Authorize → Handle result. Explain the informa
 # 21. Evaluation and statistics you can actually use
 
 ### The concept: a metric is a precise question about outcomes
+
+We now have several components that can fail. Evaluation turns “it seems better” into a specific question with counted outcomes. Define the unit and denominator before interpreting a score.
+
 “Good” is not a metric until we define the unit being scored, the correct outcome and the denominator. A unit might be a token, classification, whole request or retrieved document. Changing that unit changes the question.
 
 First define what counts as success, including partial success, clarification and unsupported answers. Then choose a representative test set and a scoring procedure. A model judge also needs validation against trusted judgments; its output is another measurement with possible error.
 
 
-### Why we need this
+> **Follow the process:** defined task → held-out cases → outcomes → metric → uncertainty
+
+### Why we need this: measure whether the system succeeds
 A few convincing answers cannot establish reliability. Evaluation turns the intended behavior into explicit, countable outcomes and reveals which kinds of mistakes an average may hide.
 
 ### Derive classification metrics from the counts
@@ -1345,11 +1469,11 @@ Three out of four predicted labels match, giving accuracy `0.75`. The incorrect 
 Class imbalance can hide rare failures: predicting the common class may achieve high accuracy while missing every rare positive. Inspect class metrics and important slices such as language, ambiguity, permission status and input length.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Changing the denominator changes the metric's meaning. More independent cases can reduce sampling uncertainty. A new score without comparable cases and scoring rules may not be evidence of an improvement.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes: measure whether ambiguous requests cause clarification, not just whether common reminders succeed. Report class-level failures alongside overall correctness, using real labels and a stated case count.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 The left plot compares stated confidence horizontally with observed correctness vertically, using explicit synthetic bins. Their mean absolute gap is the displayed calibration error. On the right, change case count while the simulated success fraction stays near 75%: the approximate standard error shrinks with more independent cases. The marker is one standard error, not a confidence interval or a study of your model.
 
 ### Check your understanding
@@ -1360,12 +1484,17 @@ The left plot compares stated confidence horizontally with observed correctness 
 # 22. Serving, latency, cost and model routing
 
 ### The concept: user waiting time spans the whole system
+
+Evaluation tells us whether outputs are useful. Deployment also asks how long they take and what they cost. Follow the complete request, including retrieval, repeated calls and fallback paths.
+
 **Latency** measures elapsed time for a request. **Throughput** measures completed work per unit time. **Concurrency** counts work in flight. They describe different properties, so a change can improve one and worsen another.
 
 For an AI response, waiting can include admission, retrieval, prompt processing and generation. **Time to first token** includes everything before the first generated token appears. **Inter-token latency** measures subsequent token spacing. Report the boundary and workload, not just “speed.”
 
 
-### Why we need this
+> **Follow the process:** request → routing → attempted calls → response; sum time and cost along the path
+
+### Why we need this: account for the work behind a user’s wait
 Users experience the complete waiting time, while the service must manage compute, memory and cost. Measuring only generated tokens per second can hide a long queue or slow retrieval.
 
 ### Derive a latency budget and average concurrency
@@ -1407,11 +1536,11 @@ print(direct, fallback)  # 2.2, 2.5
 Costs `1` and `5`, with `30%` needing the larger model, give direct cost `2.2` and fallback cost `2.5` in arbitrary units. These are calculated expectations, not measured currency prices or evidence of a real router's accuracy.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Batching can increase total completed work while increasing some users' wait. Quantization changes stored precision and possibly quality. Routing changes which model runs and whether a request pays for one attempt or several.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for a local assistant: measure prompt processing, later token generation and total response time separately. Compare the same requests before and after a configuration change rather than assuming fewer bits always means a faster, equally useful answer.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Change batch size or precision and inspect the simplified performance bound. The roofline is a model of possible bottlenecks, not a device benchmark. Actual kernels, workload and memory traffic determine measured speed.
 
 ### Check your understanding
@@ -1422,12 +1551,17 @@ Change batch size or precision and inspect the simplified performance bound. The
 # 23. LLMOps, architecture and data engineering
 
 ### The concept: the deployed prediction depends on many artifacts
+
+Serving a model depends on prompts, data, indexes and configuration as well as weights. We will identify those dependencies and record their versions so a change can be investigated and rolled back.
+
 **LLMOps** is the operational work needed to reproduce, evaluate, release and observe an AI system. A response depends on more than model weights: tokenizer, prompt, data, retrieval index, permissions, runtime settings and application code all affect behavior.
 
 A **version** identifies an artifact state. A **trace** records events along one request. A **release gate** states measurable conditions a candidate must satisfy before broader use. These solve reproduction, diagnosis and rollout problems respectively.
 
 
-### Why we need this
+> **Follow the process:** versioned inputs → pipeline → evaluation gates → release → monitoring
+
+### Why we need this: record enough information to reproduce a result
 A response can change when the prompt, data or index changes even if the weight file stays identical. Operations need enough version information to reproduce failures and release changes deliberately.
 
 ### Derive what must be recorded
@@ -1462,11 +1596,11 @@ Sequential stage durations add to `142 ms`. Retrieval and generation report succ
 This total is valid because the supplied stages are sequential. In a real trace, concurrent spans can overlap, so summing every span duration can overcount elapsed time. A successful HTTP request also need not mean a correct answer.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A versioned release and trace make comparison and rollback possible. They do not guarantee a candidate meets the task. Quality gates require actual measurements, including important failure subsets.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for a document extraction service: record source and parser versions, prompt, model, schema and output. If fields regress after an update, compare the artifacts at the earliest incorrect stage instead of guessing which component changed.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Version → Evaluate → Roll out → Monitor. Name the artifact, measurement and decision needed at each stage. A canary should be evaluated against defined outcomes before expansion. The diagram describes a release process; it does not run a deployment or predict its error rate.
 
 ### Check your understanding
@@ -1477,12 +1611,17 @@ Follow Version → Evaluate → Roll out → Monitor. Name the artifact, measure
 # 24. Fine-tuning, LoRA and QLoRA through your own adapter
 
 ### The concept: adaptation changes parameters to change behavior
+
+Prompting and retrieval supplied information at inference time. Fine-tuning uses training examples to change parameters. LoRA makes a matrix update cheaper to train by expressing it through two smaller matrices.
+
 **Pretraining** learns broad patterns from a large training objective. **Fine-tuning** continues optimization for a particular dataset or task. It is useful when the needed behavior is better learned through examples than supplied through instructions or retrieved facts.
 
 Start by identifying the failure. Missing up-to-date facts often suggest retrieval; inconsistent output style or a repeatable task behavior may suggest adaptation. Compare against a prompting baseline and use independent evaluation before claiming improvement.
 
 
-### Why we need this
+> **Follow the process:** training examples → loss → adapter gradients → adapter update → held-out evaluation
+
+### Why we need this: change model behavior by updating parameters
 Sometimes the needed improvement is a consistent behavior learned from examples. Updating every model weight can be expensive; LoRA offers a constrained update with fewer trainable values.
 
 ### Derive LoRA from a full matrix update
@@ -1519,11 +1658,11 @@ A `1024 × 1024` matrix has `1,048,576` entries. Rank-32 factors contain `32*(10
 The earlier NoteEchoes configuration review recorded rank 32, alpha 64, dropout 0.05 and `use_rslora=true`. That is a dated project snapshot, not a check of the currently installed model. The distinction matters because interpreting its scale as standard LoRA would describe a different computation.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Rank changes the capacity and size of the factorized adjustment. Learning rate changes how it is optimized. Quantizing the frozen base changes its representation. These are separate choices with different effects on quality and memory.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes adaptation: use clean target responses to teach an action format, then check held-out requests and the exported artifact. Do not use adaptation as a substitute for retrieving a fact that changes every day.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow the input through the frozen matrix and the smaller adapter path. Count the two factor matrices as rank changes. The low-bit panel describes QLoRA; ordinary LoRA does not require a four-bit base.
 
 ### Check your understanding
@@ -1534,12 +1673,17 @@ Follow the input through the frozen matrix and the smaller adapter path. Count t
 # 25. Preferences, reinforcement learning and distillation
 
 ### The concept: different feedback supplies different information
+
+Fine-tuning introduced parameter updates from examples. Other training methods use preferences, rewards or teacher outputs. Start by asking what feedback is available and what objective it actually rewards.
+
 Training needs a signal that makes some behavior preferable to other behavior. A correct answer, a pairwise preference, a numerical reward and a teacher's probability distribution supply different kinds of information. The objective determines how that information affects parameters.
 
 **Supervised fine-tuning** increases the probability of supplied target outputs. **Preference optimization** uses judgments comparing outputs. **Reinforcement learning** optimizes a policy using rewards from sampled behavior. **Distillation** trains a student to match selected behavior or distributions from a teacher. These categories overlap in practice but are not interchangeable names for the same loss.
 
 
-### Why we need this
+> **Follow the process:** feedback → training objective → parameter update → behavioral evaluation
+
+### Why we need this: choose a training signal that matches the goal
 There is not always one target answer that captures what users prefer. Preferences, rewards and teacher outputs offer other learning signals, but each must be translated into an objective.
 
 ### Derive the reward objective
@@ -1575,11 +1719,11 @@ The first answer contains one occurrence of “source”; the second contains th
 A better evaluation would inspect whether citations identify genuine supporting passages and whether the answer addresses the question. That still requires defining and validating a scoring procedure rather than adding a new keyword.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Optimization makes behavior fit the supplied signal more strongly. If the signal rewards a shortcut, that shortcut can improve while usefulness worsens. More inference computation is different from updating parameters.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for an assistant: users may prefer a concise supported answer over a long unsupported one. Collect comparisons under a clear rubric, then evaluate useful outcomes separately instead of rewarding the word “source.”
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Collect → Choose objective → Update → Evaluate. Ask what the feedback actually measures before optimizing it, then check whether useful behavior improves. The marker illustrates the learning procedure; it does not run preference optimization or demonstrate a guaranteed reward-hacking defense.
 
 ### Check your understanding
@@ -1590,12 +1734,17 @@ Follow Collect → Choose objective → Update → Evaluate. Ask what the feedba
 # 26. Multimodal AI and the complete NoteEchoes journey
 
 ### The concept: each representation change can lose information
+
+The same modeling and evaluation ideas apply when inputs include audio or images. Each conversion creates an artifact and can lose information. Follow those artifacts so a downstream error can be traced to its source.
+
 **Multimodal AI** processes more than one kind of information, such as text, audio or images. A system might use one joint model or several specialized components. In either case, representation boundaries deserve explicit inputs, outputs and evaluation.
 
 For a voice application, the main chain can be audio waveform → transcript → structured intent → validated action → execution receipt. A later stage can behave correctly relative to its input while the end-to-end outcome remains wrong because an earlier stage corrupted information.
 
 
-### Why we need this
+> **Follow the process:** audio → transcript → interpreted request → validated action → result
+
+### Why we need this: follow information across audio, text and actions
 Audio, text and actions represent different information. A system can lose a critical detail while moving between them, even when the final output is well formed.
 
 ### Derive the diagnostic method
@@ -1636,11 +1785,11 @@ The dictionary names the stage artifacts for a fictional reminder. Printing the 
 To turn this into a real investigation, collect the actual stage outputs for controlled requests. If audio says Tuesday and the transcript says Thursday, the error precedes intent extraction. If the transcript is right but the proposed date is wrong, investigate interpretation and date resolution.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Better transcription changes the text available to interpretation. Better field extraction changes the proposed action. Better permission checks change which actions are attempted. Each intervention fixes a different boundary.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for NoteEchoes: compare the spoken date with the transcript, the transcript with the proposed date, and the proposal with the executed reminder. This reveals whether the earliest error was hearing, interpretation or execution.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Audio → Transcript → Proposal → Checked action. Carry a particular name or date through all four representations and identify the earliest incorrect version. This walkthrough does not perform speech recognition or OCR, and it does not measure end-to-end success.
 
 ### Check your understanding
@@ -1651,12 +1800,17 @@ Follow Audio → Transcript → Proposal → Checked action. Carry a particular 
 # 27. Coding, SQL, system design and behavioral interviews
 
 ### The concept: explain a solution through its requirements
+
+You have studied both model calculations and application boundaries. Now practice explaining decisions: define the required behavior, choose a method, test edge cases, and justify its cost.
+
 An interview tests whether you can turn an ambiguous request into a correct, defensible solution. Coding, SQL, design and behavioral questions use different artifacts, but all benefit from explicit assumptions, a clear mechanism and evidence.
 
 Begin by defining input, output, constraints and success. Then choose an approach because it satisfies those requirements. Naming a data structure, framework or cloud service without showing its role leaves the reasoning incomplete.
 
 
-### Why we need this
+> **Follow the process:** requirements → example → approach → implementation → checks → explanation
+
+### Why we need this: explain your reasoning through a concrete problem
 Knowing a tool's name is different from explaining why a solution is correct. Coding, SQL and design practice develop the ability to turn requirements into a testable mechanism.
 
 ### Derive a coding approach from the operation
@@ -1688,11 +1842,11 @@ print(heapq.nlargest(2, scores))
 `nlargest(2, scores)` returns the two highest tuples, led by score. If scores tie, tuple comparison can use the note ID as a secondary ordering, so define tie behavior explicitly when it matters. The lab demonstrates the result contract; it does not implement or benchmark the heap algorithm described above.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A different algorithm can change time and memory growth while preserving the required output. A changed data model can change what rows mean. A persuasive explanation must connect those choices to the actual constraint.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for your search service: maintain the best few candidate notes without sorting every candidate when that tradeoff matters. Explain ties, empty inputs and update costs. Use your actual measurements when discussing project improvements.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Clarify → Implement → Test → Explain. Pause and give one concrete artifact for each stage: a contract, a solution, a boundary case and a correctness argument. This is an interview workflow, not an animation of a heap or a measured data-processing system.
 
 ### Check your understanding
@@ -1703,12 +1857,17 @@ Follow Clarify → Implement → Test → Explain. Pause and give one concrete a
 # 28. Your capstone and a learning plan that allows understanding
 
 ### The concept: demonstrate one complete, measurable behavior
+
+The interview exercises asked you to explain individual decisions. A capstone connects those decisions in a small working system. Choose one observable behavior and define how you will recognize success before expanding scope.
+
 A **capstone** is a small project that connects the course concepts into a working system. Its purpose is to demonstrate understanding through inspectable behavior. A narrow end-to-end task usually provides better evidence than many disconnected features.
 
 Start with a user outcome, expected inputs, allowed data and a completion condition. A baseline establishes what the simplest approach can do. Add retrieval, a model or an agent only when the requirement or measured failure justifies it.
 
 
-### Why we need this
+> **Follow the process:** behavior → baseline → implementation → evaluation → failure analysis
+
+### Why we need this: demonstrate one complete behavior with evidence
 A small complete project makes abstract knowledge inspectable. It forces you to connect input handling, model behavior, validation and failure recovery instead of demonstrating isolated successful calls.
 
 ### Derive the acceptance contract
@@ -1745,11 +1904,11 @@ The next useful step is to inspect those two cases and determine their cause. Ad
 Use the 30 days as sessions, not proof of mastery on a deadline. For each lesson, first explain the mechanism without numbers, then derive or justify its rule, then calculate the example. Finally change one condition and predict the result before running it.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 A defined acceptance contract turns “looks good” into specific pass/fail outcomes. Adding a feature can add failure paths, so more components do not automatically make the project stronger.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for your capstone: answer from two authorized documents, cite supporting passages and decline unsupported questions. If it proposes actions, add explicit validation and outcome records before expanding its autonomy.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Follow Scope → Build → Evaluate → Demonstrate. Identify the user outcome, smallest complete implementation, acceptance cases and failure demonstration. The marker shows the project process; it does not establish readiness or generate benchmark scores.
 
 ### Check your understanding
@@ -1760,12 +1919,17 @@ Follow Scope → Build → Evaluate → Demonstrate. Identify the user outcome, 
 # 29. Your parameter map and a gentle glossary
 
 ### The concept: identify where a setting acts before changing it
+
+Your capstone exposes many settings. Their effects differ because they act at different stages. Identify the stage, predict an observable effect, and change one setting at a time.
+
 The word “parameter” is often used loosely. A **learned parameter** is a value optimized during training, such as a weight. A **hyperparameter** configures the learning procedure. An **architecture choice** defines the computation's structure. An **inference setting** controls how current weights are used. A **retrieval setting** controls evidence search.
 
 These categories can interact, but they affect different stages. Raising temperature cannot train a better representation. Increasing retrieval depth cannot correct an unauthorized executor. The first step is to locate the observed failure in the pipeline.
 
 
-### Why we need this
+> **Follow the process:** symptom → relevant stage → one setting change → controlled comparison
+
+### Why we need this: locate a setting before turning its knob
 Many settings look like interchangeable numbers, but they act at different stages. A useful experiment first identifies the failure and the setting that could plausibly influence it.
 
 ### The rules behind common knobs
@@ -1803,11 +1967,11 @@ assert len(changed) == 1
 To complete the experiment, predict the effect, run comparable trials, collect the relevant trajectories and compare quality, latency and memory as appropriate. Retain or revert based on the defined objective.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Changing one setting under comparable conditions makes its effect easier to interpret. Randomness and unrecorded changes can still confuse the result. A configuration difference alone does not establish a quality improvement.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for your retrieval work: increase returned-result count while keeping the documents, embeddings, question set and scoring policy fixed. Compare evidence coverage, answer quality and latency rather than assuming a larger count wins.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 Use the baseline overlay to compare simulated tradeoffs. The radar shape encodes teaching assumptions; it is not a forecast of how your project will perform. Replace those assumptions with measurements when making a real decision.
 
 ### Check your understanding
@@ -1818,12 +1982,17 @@ Use the baseline overlay to compare simulated tradeoffs. The radar shape encodes
 # 30. Optional workshop: read and run the complete tiny decoder
 
 ### The concept: connect the calculation, the objective and the update
+
+The earlier chapters introduced the components separately. This optional workshop joins them in runnable code. Trace tensor shapes first, then target alignment, then the training update and generation loop.
+
 This workshop assembles the earlier ideas into a small causal language model. The **forward pass** maps token IDs to next-token logits. The **loss** scores the correct next tokens. The **backward pass** computes gradients. The **optimizer** changes parameters. **Generation** uses current parameters repeatedly to append tokens.
 
 Read those interfaces first. The complete program is manageable when every operation has an input, output and purpose. It is a teaching decoder trained on repeated synthetic text, not a replica of the NoteEchoes model or evidence of broad language ability.
 
 
-### Why we need this
+> **Follow the process:** token IDs → decoder → logits → shifted-target loss → gradients → update
+
+### Why we need this: trace the complete decoder from input to update
 Reading a complete small model connects the separate lessons into one executable process. It makes the distinction between predicting, scoring, differentiating, updating and generating concrete.
 
 ### Derive the tensor route before reading the code
@@ -1974,11 +2143,11 @@ if __name__ == '__main__':
 The program prints parameter count, periodic training loss and a greedy sample. The corpus repeats a few sentences, so a decreasing loss mainly establishes that the training machinery can fit that narrow distribution. Independent data and broader tasks are needed for claims about generalization.
 
 
-### What changes when you use it
+### What changes when you use it: connect the operation to its effect
 Training changes parameters and therefore later predictions. Generation repeatedly extends an input using current parameters. Changing a future input must not alter earlier causal outputs, regardless of how low training loss becomes.
-### A project connection
+### A project connection: apply the idea to your assistant
 Illustration for understanding NoteEchoes: use this decoder to learn the broad input-to-logit flow, then compare it with the real checkpoint configuration. Do not treat its repeated character corpus or simpler architecture as a reproduction of your deployed assistant.
-### Read the visual
+### Read the visual: follow what enters and leaves each step
 The moving marker traces four reading passes: Shapes → Forward → Training → Generation. Pause at each stage and explain its purpose. This concept walkthrough does not execute the decoder; use the downloadable PyTorch program to run it in an appropriate environment.
 
 ### Check your understanding: test the mask, not just the loss
