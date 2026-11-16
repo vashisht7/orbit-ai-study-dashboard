@@ -7,3 +7,5 @@ GitHub Pages publishes main from the repository root.
 Site: https://vashisht7.github.io/orbit-ai-study-dashboard/
 
 For lessons from Chapter 4 onward, use connected, book-like explanations: introduce the purpose before formulas, explain notation, use concrete worked examples and illustrations, and choose section headings that describe what the operation does.
+
+The main learning path must teach neural language models. Keep count-based models and additive count smoothing clearly separate as optional background; never imply they are stages of the neural pipeline.

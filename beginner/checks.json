@@ -18,10 +18,10 @@
     "To change the model's learned weights during inference."
   ],
   [
-    "Why does additive smoothing add alpha times V to the denominator?",
-    "It adds alpha to each of V possible next-token counts.",
-    "It multiplies every observed count by vocabulary size.",
-    "It gives unseen events zero probability."
+    "Which sequence describes neural next-token prediction?",
+    "Token IDs \u2192 embeddings \u2192 neural layers \u2192 logits \u2192 softmax.",
+    "Transition counts \u2192 smoothing \u2192 embeddings \u2192 softmax.",
+    "Softmax learns token IDs before the model sees text."
   ],
   [
     "What does an embedding lookup do?",

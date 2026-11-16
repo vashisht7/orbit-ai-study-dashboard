@@ -174,109 +174,108 @@ Move temperature while keeping the logits fixed. Compare the probability bars an
 
 **Answer:** No. All pairwise score differences stay the same, and the common exponential factor cancels. Subtracting the maximum uses exactly this property. Lowering temperature can make a wrong leading choice more dominant, so confidence and correctness must be checked separately.
 
-# 04. Build your first language predictor with counts
+# 04. The neural language-model pipeline: from text to the next token
 
-### The concept: learning can mean estimating a frequency
+### The concept: one neural pipeline, two different activities
+Chapter 3 showed how softmax turns scores into probabilities. That is near the **end** of a neural language model's prediction calculation. This chapter places it in the complete route so you can locate every concept you learn next.
 
-Chapter 3 converted scores into probabilities. Now we will obtain probabilities directly from observations: count what followed a token, then divide by the number of opportunities. This gives us a small language model we can inspect completely.
+Our main learning path is neural language modeling, leading to a causal Transformer. Counting word pairs and adding pseudo-counts are a different modeling approach. You do not need to build that approach before learning this one.
 
-Language prediction asks which token might come next given previous tokens. A **bigram model** makes a simplifying assumption: use only the immediately preceding token as context. A token can be a character in this lesson; it need not be a complete word.
+> **Follow the process:** text → token IDs → embeddings → contextual neural layers → logits → softmax → choose a token → append and repeat.
 
-The model learns a table of transition counts from text. At prediction time it looks up the row for the current token. This already separates training, which builds counts, from inference, which uses the table.
+### Why we need this: locate each operation before studying its details
+An embedding is an input representation. A logit is an output score. A probability tells us how the model distributes its prediction over possible next tokens. Keeping these roles separate prevents a list of AI terms from looking like interchangeable operations.
 
+### Turn text into IDs so the model can look up its inputs
+A tokenizer converts text into vocabulary IDs. For an illustrative vocabulary `["I", "like", "tea"]`, the token `I` has ID 0. An ID is an address: a larger ID does not mean a more important word. Real tokenizers often split words into smaller pieces.
 
-> **Follow the process:** text → neighboring token pairs → counts → probabilities → next-token choice
+### Look up embeddings so tokens have learnable numerical representations
+Use each ID to select a row from an embedding table. Suppose row 0 is `[1.0, 0.5]`. Those two values are features the neural model can use. In training, embedding values can change along with other weights. The vector is not itself a next-token probability distribution.
 
-### Why we need this: turn observations into next-token probabilities
-Counting gives us the smallest transparent example of learning from data. It shows how past observations can become future predictions before we introduce neural-network weights and calculus.
+### Process context so the prediction can depend on earlier tokens
+A Transformer processes the embedding sequence with position information, attention and feed-forward layers. At the final input position, the resulting vector summarizes information useful for predicting the next token. We will unpack these operations in Chapters 8–11. The small example below skips those contextual layers to make the input and output boundaries easy to inspect.
 
-### Derive the probability from counting
-Let $C(i,j)$ count how often token $j$ immediately follows token $i$. Let $N_i=\sum_k C(i,k)$ count all observed transitions out of $i$. Then, when $N_i>0$:
+### Project the final vector into one score per vocabulary token
+An output layer produces **logits**, one score for every candidate token:
 
-$$ P(j\mid i)=\frac{C(i,j)}{N_i} $$
+$$ \mathbf{z}=W_{\mathrm{out}}\mathbf{h}+\mathbf{b} $$
 
-$P(j\mid i)$ means “probability of next token $j$, given previous token $i$.” The vertical bar means “given,” not division. $k$ indexes the possible next tokens. We divide by the row total because we are comparing outcomes under that particular context. Dividing by the entire corpus length would answer a different question.
+| Symbol | Role |
+|---|---|
+| $\mathbf{h}$ | Final hidden vector at the position used to predict the next token |
+| $W_{\mathrm{out}}$ | Learned matrix mapping hidden features to vocabulary scores |
+| $\mathbf{b}$ | Optional bias vector; some models omit it |
+| $\mathbf{z}$ | Vector of vocabulary scores, called logits |
 
-Adding these fractions over all next tokens gives $N_i/N_i=1$. The normalization therefore produces a valid distribution. The assumption is that observed relative frequency is a useful estimate for future inputs from a comparable source.
+For hidden width $d$ and vocabulary size $V$, this column-vector convention uses a $V\times d$ output matrix. The result has $V$ entries. Scores can be negative and need not sum to one.
 
-### Reserve a chance for tokens you have not observed: smoothing
-Suppose our chosen vocabulary contains three possible next tokens: `b`, `c` and `d`. After `a`, we observed `b` three times and `c` once. We have never observed `d` after `a`. Dividing by four gives probabilities of 75%, 25% and 0%.
+### Apply softmax so the scores become a probability distribution
+$$ p_i=\frac{\exp(z_i/T)}{\sum_{j=1}^{V}\exp(z_j/T)} $$
 
-That zero is a strong claim: this model cannot generate `d` after `a`. But a small training sample may simply have missed that transition. **Smoothing reserves some probability for unseen possibilities.** It does not establish that every possible transition is sensible.
+Here $z_i$ is the score of candidate $i$, $j$ runs over all candidates, $V$ is vocabulary size, and $T>0$ is temperature. Ordinary softmax uses $T=1$. The notation $\exp(x)$ means $e^x$.
 
-### Add a small count to every candidate, then recompute the total
-Choose a positive number called $\alpha$ (alpha). Add it to every candidate’s count, including candidates with zero observations. These additions are **pseudo-counts**: an assumption we choose, not extra events we observed.
+For logits `[0, 2, 1]` and temperature 1, the probabilities are approximately `[0.090, 0.665, 0.245]`. The same vocabulary order is preserved: `I`, `like`, `tea`. Softmax converts scores into probabilities; it does not learn the scores or guarantee a correct answer.
 
-With $\alpha=1$, the calculation looks like this:
+### Choose a token, append it, and predict again
+Greedy decoding picks the highest-probability token: `like` in this example. Sampling draws a token according to the distribution. Append the selected token to the input and repeat to generate more text. The weights normally remain fixed during this activity, called **inference**.
 
-| Next token after `a` | Observed count | Add the pseudo-count | Smoothed probability |
-|---|---:|---:|---:|
-| `b` | 3 | 3 + 1 = 4 | 4/7 ≈ 57.1% |
-| `c` | 1 | 1 + 1 = 2 | 2/7 ≈ 28.6% |
-| `d` | 0 | 0 + 1 = 1 | 1/7 ≈ 14.3% |
-| **Total** | **4** | **7** | **100%** |
+### Separate training from inference: loss teaches the weights
+Training has an observed next token, called the **target**. If the training text is `I like tea`, one task is to predict `like` after `I`. Cross-entropy measures how little probability the model assigned to the target. Backpropagation computes gradients, and an optimizer changes trainable weights. Chapters 6–7 explain that learning loop.
 
-Read across a row to follow one candidate. Read down the adjusted-count column to find the new denominator. We added one count three times, so the total increased from four to seven. Dividing by the old total would produce probabilities that sum to more than one.
+| During inference | During training |
+|---|---|
+| Use current weights to compute logits | Use current weights to compute logits |
+| Choose a token from the output distribution | Compare predictions with observed next-token targets |
+| Append the choice and continue | Compute gradients and update weights |
 
-### Read the smoothing formula one symbol at a time
-$$ P(j\mid i)=\frac{C(i,j)+\alpha}{N_i+\alpha V} $$
+Training implementations often combine logits and cross-entropy in one numerically stable operation. The probability interpretation still applies even when code does not call softmax separately.
 
-| Symbol | Meaning in words | Value for predicting `d` after `a` |
-|---|---|---|
-| $i$ | The previous token, our context | `a` |
-| $j$ | The next token we are considering | `d` |
-| $C(i,j)$ | How many times this transition was observed | 0 |
-| $N_i$ | Total observed transitions after this context | 4 |
-| $\alpha$ | Pseudo-count added to each candidate | 1 |
-| $V$ | Number of candidates in the chosen vocabulary | 3 |
-| $P(j\mid i)$ | Probability of the next token, given the previous token | 1/7 |
+### Keep count smoothing outside this neural pipeline
+A count model estimates probabilities by counting observed transitions, optionally adding pseudo-counts, and dividing by a total. **That is an alternative baseline, not a stage before embeddings or softmax.** Additive count smoothing is not required in this neural path. Temperature and label smoothing are separate concepts; neither means adding counts to a transition table here.
 
-For this row, substitute the numbers: $(0+1)/(4+1\times3)=1/7$. The numerator adjusts one candidate; the denominator accounts for the additions to all candidates.
-
-### Predict what happens when you change alpha
-A small positive alpha keeps the probabilities close to the observed frequencies while giving unseen candidates a small chance. Increasing alpha pulls this distribution toward equal probabilities. If a context has never appeared, all counts are zero and the formula gives $1/V$ for each candidate.
-
-Chapter 3’s temperature changed probabilities derived from scores. Here we adjust a table of counts before normalizing it. Keep the operations separate: **count → add pseudo-counts → divide by the adjusted total**.
-
-We will now build the observed counts from real character pairs. The first code example deliberately shows the unsmoothed counts so you can see exactly which information comes from the text before adding any assumptions.
-
-### Worked example: inspect the actual transitions
+### Worked example: trace IDs, vectors, logits and probabilities
+The following tiny neural calculation uses fixed teaching weights, a two-number embedding and an output layer. It does not train, use attention, or model the full context. Its purpose is to make the interfaces visible before adding Transformer layers.
 
 ```python
-from collections import defaultdict, Counter
-text = "hello hello"
-counts = defaultdict(Counter)
-for previous, following in zip(text, text[1:]):
-    counts[previous][following] += 1
-
-row = counts["l"]
-total = sum(row.values())
-print(dict(row))
-print({char: count / total for char, count in row.items()})
+import math
+# Fixed teaching weights: this illustrates inference, not a trained Transformer.
+vocabulary = ["I", "like", "tea"]
+token_id = vocabulary.index("I")
+embeddings = [[1.0, 0.5], [0.2, 0.8], [0.7, -0.1]]
+hidden = embeddings[token_id]
+output_weights = [[0.0, 0.0], [1.0, 2.0], [0.0, 2.0]]
+logits = [sum(w * h for w, h in zip(row, hidden))
+          for row in output_weights]
+shifted = [math.exp(z - max(logits)) for z in logits]
+probabilities = [value / sum(shifted) for value in shifted]
+print("Token ID:", token_id)
+print("Embedding:", hidden)
+print("Logits:", logits)
+print({token: round(p, 3) for token, p in zip(vocabulary, probabilities)})
+print("Greedy next token:", vocabulary[probabilities.index(max(probabilities))])
 ```
 
-`zip(text, text[1:])` pairs each character with its successor. In `hello hello`, the character `l` is followed by `l` twice and by `o` twice. Its row total is four, giving probability `0.5` to each observed successor. This lab implements the unsmoothed rule; it prints only observed successors, with unobserved transitions implicitly assigned zero.
+The ID 0 selects `[1.0, 0.5]`. The output row `[1.0, 2.0]` gives the score for `like`: $1\times1+2\times0.5=2$. The three rows produce `[0, 2, 1]`. Subtracting the maximum before exponentiation preserves softmax probabilities while avoiding unnecessarily large exponentials.
 
-To implement smoothing, enumerate the complete chosen vocabulary, add $\alpha$ to every count, and use the adjusted total. Adding only to observed entries would leave unseen entries at zero.
+### What changes when you use it: weights determine the scores
+Changing an embedding or output weight can change the logits and therefore the predicted probabilities. Changing temperature changes the distribution used for selection without updating learned weights. These interventions occur at different places in the pipeline.
 
+### A project connection: separate model generation from application execution
+Your assistant's language model can generate tokens that describe an action. The application still validates that description and executes permitted operations. A high next-token probability does not prove that an action is valid or completed.
 
-### What changes when you use it: connect the operation to its effect
-Additional observations change relative transition counts. Smoothing redistributes some probability to unseen possibilities. Neither change gives the model access to earlier words that its one-token context discarded.
-### A project connection: apply the idea to your assistant
-Illustration for your study workflow: build a character predictor from a few action phrases, then try a new phrase. Its failure shows why counting alone is a limited baseline for interpreting varied reminder requests; it does not measure NoteEchoes performance.
-### Read the visual: follow what enters and leaves each step
-Find the missing transition, then increase smoothing. Its probability becomes positive while some observed transitions lose probability. The total must remain one. This is redistribution under a chosen assumption, not newly discovered evidence.
+### Read the visual: follow the neural route one operation at a time
+Start with the token ID, follow its vector through the neural model, inspect the logits, and then read the probability distribution. The arrow back from token selection to the input is generation. The separate route through loss, gradients and updates is training.
 
 ### Check your understanding
-**Question:** Why can this model fail even if every count is calculated correctly?
+**Question:** Where do transition counting and additive count smoothing belong in this neural model's forward pass?
 
-**Answer:** Different earlier sentences can end with the same token. The model uses the same transition row for both because it discarded earlier context. Correct counting cannot recover information excluded by the architecture. A larger context can distinguish more situations, but also creates more contexts with little or no data.
+**Answer:** They do not belong in this forward pass. The neural route uses embeddings and learned layers to produce logits, then interprets logits as next-token probabilities. Chapter 5 now zooms into the first two stages: tokenization and embedding lookup.
 
 # 05. Turn text into tokens, then into embeddings
 
 ### The concept: text becomes indices before it becomes vectors
 
-The counting model stored a separate row for every previous token. To build a neural model, we first need a consistent way to identify tokens and represent them numerically. We will separate two operations: assigning an ID and looking up a vector.
+Chapter 4 mapped the neural prediction pipeline. Now we zoom into its input stages: identifying tokens and representing them numerically. We will separate two operations: assigning an ID and looking up a vector.
 
 A neural model operates on numbers. **Tokenization** converts text into a sequence of vocabulary entries and their integer IDs. **Embedding lookup** converts those IDs into learned vectors. These are separate operations, with different purposes.
 

@@ -22,7 +22,7 @@
   },
   {
     "id": "04",
-    "title": "Build your first language predictor with counts",
+    "title": "The neural language-model pipeline: from text to the next token",
     "part": "Make a model you can see",
     "experiment": "none",
     "lab": "lesson_04.py"
